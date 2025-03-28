@@ -116,7 +116,7 @@ pub fn generate(
 		}
 
 		impl #impl_generics ::linked_data::LinkedData<I_, V_> for #ident #ty_generics #where_clause {
-			fn visit<S_>(&self, mut visitor: S_) -> Result<S_::Ok, S_::Error>
+			fn accept_visitor<S_>(&self, mut visitor: S_) -> Result<S_::Ok, S_::Error>
 			where
 				S_: ::linked_data::Visitor<I_, V_>
 			{

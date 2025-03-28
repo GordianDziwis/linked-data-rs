@@ -166,7 +166,7 @@ impl<I: Interpretation, V: Vocabulary, T: LinkedDataGraph<I, V>> LinkedDataGraph
 impl<I: Interpretation, V: Vocabulary, T: LinkedDataGraph<I, V>> LinkedData<I, V>
 	for AnonymousGraph<T>
 {
-	fn visit<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: crate::Visitor<I, V>,
 	{

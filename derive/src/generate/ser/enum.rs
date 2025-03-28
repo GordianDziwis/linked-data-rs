@@ -245,7 +245,7 @@ pub fn generate(
 		}
 
 		impl #dataset_impl_generics ::linked_data::LinkedData<I_, V_> for #ident #ty_generics #dataset_where_clauses {
-			fn visit<S_>(&self, mut visitor: S_) -> Result<S_::Ok, S_::Error>
+			fn accept_visitor<S_>(&self, mut visitor: S_) -> Result<S_::Ok, S_::Error>
 			where
 				S_: ::linked_data::Visitor<I_, V_>
 			{
@@ -647,7 +647,7 @@ fn variant_serialize(
 						::linked_data::AnonymousBinding(
 							::linked_data::iref::Iri::new(#iri).unwrap(),
 							#id
-						).visit(visitor)
+						).accept_visitor(visitor)
 					}
 				}
 				VariantShape::Compound(inner_ty) => {
@@ -661,7 +661,7 @@ fn variant_serialize(
 						::linked_data::AnonymousBinding(
 							::linked_data::iref::Iri::new(#iri).unwrap(),
 							&#inner_id #input
-						).visit(visitor)
+						).accept_visitor(visitor)
 					}
 				}
 				VariantShape::Unit => {
@@ -682,7 +682,7 @@ fn variant_serialize(
 				);
 
 				quote! {
-					<#ty as ::linked_data::LinkedData<I_, V_>>::visit(#id, visitor)
+					<#ty as ::linked_data::LinkedData<I_, V_>>::accept_visitor(#id, visitor)
 				}
 			}
 			VariantShape::Compound(inner_ty) => {
@@ -693,7 +693,7 @@ fn variant_serialize(
 				vocabulary_bounds.add(inner_ty.visit_vocabulary_bounds);
 
 				quote! {
-					#inner_id #input .visit(visitor)
+					#inner_id #input .accept_visitor(visitor)
 				}
 			}
 			VariantShape::Unit => {
@@ -884,7 +884,7 @@ fn variant_subject_type(
 		}
 
 		impl #visit_impl_generics ::linked_data::LinkedData<I_, V_> for #subject_id #ty_generics #visit_where_clauses {
-			fn visit<S_>(&self, mut visitor: S_) -> Result<S_::Ok, S_::Error>
+			fn accept_visitor<S_>(&self, mut visitor: S_) -> Result<S_::Ok, S_::Error>
 			where
 				S_: ::linked_data::Visitor<I_, V_>
 			{

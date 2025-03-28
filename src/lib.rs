@@ -161,7 +161,7 @@ impl FromLinkedDataError {
 /// [`visit`](Self::visit) method.
 pub trait LinkedData<I: Interpretation = (), V: Vocabulary = ()> {
 	/// Visit the RDF dataset represented by this type.
-	fn visit<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_visitor<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: Visitor<I, V>;
 }
@@ -169,25 +169,25 @@ pub trait LinkedData<I: Interpretation = (), V: Vocabulary = ()> {
 impl<I: Interpretation, V: Vocabulary, T: ?Sized + LinkedData<I, V>> LinkedData<I, V>
 	for &T
 {
-	fn visit<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_visitor<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: Visitor<I, V>,
 	{
-		T::visit(self, visitor)
+		T::accept_visitor(self, visitor)
 	}
 }
 
 impl<I: Interpretation, V: Vocabulary, T: ?Sized + LinkedData<I, V>> LinkedData<I, V> for Box<T> {
-	fn visit<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_visitor<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: Visitor<I, V>,
 	{
-		T::visit(self, visitor)
+		T::accept_visitor(self, visitor)
 	}
 }
 
 impl<I: Interpretation, V: Vocabulary> LinkedData<I, V> for Iri {
-	fn visit<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_visitor<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: Visitor<I, V>,
 	{

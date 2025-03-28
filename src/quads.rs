@@ -32,7 +32,7 @@ where
 		+ TermInterpretationMut<V::Iri, V::BlankId, V::Literal>,
 	I::Resource: Clone,
 {
-	value.visit(QuadSerializer {
+	value.accept_visitor(QuadSerializer {
 		vocabulary,
 		interpretation,
 		domain: &mut InterpretationDomain,
@@ -123,7 +123,7 @@ where
 {
 	let mut domain = LexicalDomain;
 
-	value.visit(QuadSerializer {
+	value.accept_visitor(QuadSerializer {
 		vocabulary,
 		interpretation,
 		domain: &mut domain,
@@ -194,7 +194,7 @@ where
 {
 	let mut domain = VocabularyDomain;
 
-	value.visit(QuadSerializer {
+	value.accept_visitor(QuadSerializer {
 		vocabulary,
 		interpretation,
 		domain: &mut domain,

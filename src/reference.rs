@@ -61,7 +61,7 @@ impl<I: Interpretation, V: Vocabulary, T: LinkedDataResource<I, V>> LinkedDataGr
 }
 
 impl<I: Interpretation, V: Vocabulary, T: LinkedDataResource<I, V>> LinkedData<I, V> for Ref<T> {
-	fn visit<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: crate::Visitor<I, V>,
 	{

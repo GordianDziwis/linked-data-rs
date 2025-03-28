@@ -1157,7 +1157,7 @@ impl<I: Interpretation, V: Vocabulary, D: Domain<I, V>> PredicateObjectsVisitor<
 	type Ok = ();
 	type Error = IntoQuadsError;
 
-	fn object<T>(&mut self, value: &T) -> Result<(), Self::Error>
+	fn visit_object<T>(&mut self, value: &T) -> Result<(), Self::Error>
 	where
 		T: ?Sized + LinkedDataResource<I, V> + crate::LinkedDataSubject<I, V>,
 	{
@@ -1205,7 +1205,7 @@ impl<I: Interpretation, V: Vocabulary, D: Domain<I, V>> PredicateObjectsVisitor<
 	type Ok = ();
 	type Error = IntoQuadsError;
 
-	fn object<T>(&mut self, value: &T) -> Result<(), Self::Error>
+	fn visit_object<T>(&mut self, value: &T) -> Result<(), Self::Error>
 	where
 		T: ?Sized + LinkedDataResource<I, V> + crate::LinkedDataSubject<I, V>,
 	{

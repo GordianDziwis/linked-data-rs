@@ -83,7 +83,7 @@ where
 			.dataset
 			.quad_objects(self.graph, self.subject, self.predicate)
 		{
-			visitor.object(&Object {
+			visitor.visit_object(&Object {
 				dataset: self.dataset,
 				graph: self.graph,
 				object,

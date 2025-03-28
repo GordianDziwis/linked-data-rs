@@ -147,7 +147,7 @@ impl<I: Interpretation, V: Vocabulary, T: LinkedDataGraph<I, V>> LinkedDataPredi
 	where
 		S: crate::PredicateObjectsVisitor<I, V>,
 	{
-		visitor.object(self)?;
+		visitor.visit_object(self)?;
 		visitor.end()
 	}
 }

@@ -23,7 +23,7 @@ macro_rules! json_literal {
 			where
 				S: $crate::PredicateObjectsVisitor<I, V>,
 			{
-				visitor.object(self)?;
+				visitor.visit_object(self)?;
 				visitor.end()
 			}
 		}

@@ -59,7 +59,7 @@ impl<I: Interpretation, V: Vocabulary, T: LinkedDataSubject<I, V> + LinkedDataRe
 		S: PredicateObjectsVisitor<I, V>,
 	{
 		if let Some(t) = self {
-			visitor.object(t)?;
+			visitor.visit_object(t)?;
 		}
 
 		visitor.end()
@@ -74,7 +74,7 @@ impl<I: Interpretation, V: Vocabulary, T: LinkedDataSubject<I, V> + LinkedDataRe
 		S: PredicateObjectsVisitor<I, V>,
 	{
 		for t in self {
-			visitor.object(t)?;
+			visitor.visit_object(t)?;
 		}
 
 		visitor.end()
@@ -89,7 +89,7 @@ impl<I: Interpretation, V: Vocabulary, T: LinkedDataSubject<I, V> + LinkedDataRe
 		S: PredicateObjectsVisitor<I, V>,
 	{
 		for t in self {
-			visitor.object(t)?;
+			visitor.visit_object(t)?;
 		}
 
 		visitor.end()
@@ -104,7 +104,7 @@ where
 	where
 		S: PredicateObjectsVisitor<I, V>,
 	{
-		visitor.object(self)?;
+		visitor.visit_object(self)?;
 		visitor.end()
 	}
 }
@@ -117,7 +117,7 @@ where
 	where
 		S: PredicateObjectsVisitor<I, V>,
 	{
-		visitor.object(self)?;
+		visitor.visit_object(self)?;
 		visitor.end()
 	}
 }
@@ -130,7 +130,7 @@ where
 	where
 		S: PredicateObjectsVisitor<I, V>,
 	{
-		visitor.object(self)?;
+		visitor.visit_object(self)?;
 		visitor.end()
 	}
 }
@@ -143,7 +143,7 @@ where
 	where
 		S: PredicateObjectsVisitor<I, V>,
 	{
-		visitor.object(self)?;
+		visitor.visit_object(self)?;
 		visitor.end()
 	}
 }
@@ -168,7 +168,7 @@ pub trait PredicateObjectsVisitor<I: Interpretation, V: Vocabulary> {
 	type Ok;
 	type Error;
 
-	fn object<T>(&mut self, value: &T) -> Result<(), Self::Error>
+	fn visit_object<T>(&mut self, value: &T) -> Result<(), Self::Error>
 	where
 		T: ?Sized + LinkedDataResource<I, V> + LinkedDataSubject<I, V>;
 

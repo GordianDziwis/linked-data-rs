@@ -37,7 +37,7 @@ macro_rules! datatype {
 				where
 					S: PredicateObjectsVisitor<I, V>,
 				{
-					visitor.object(self)?;
+					visitor.visit_object(self)?;
 					visitor.end()
 				}
 			}
@@ -74,7 +74,7 @@ macro_rules! unsized_datatype {
 				where
 					S: PredicateObjectsVisitor<I, V>,
 				{
-					visitor.object(self)?;
+					visitor.visit_object(self)?;
 					visitor.end()
 				}
 			}
@@ -141,7 +141,7 @@ impl<V: Vocabulary + IriVocabularyMut + LiteralVocabularyMut, I: Interpretation>
 	where
 		S: PredicateObjectsVisitor<I, V>,
 	{
-		visitor.object(self)?;
+		visitor.visit_object(self)?;
 		visitor.end()
 	}
 }

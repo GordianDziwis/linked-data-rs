@@ -100,7 +100,7 @@ pub fn generate(
 			where
 				S_: ::linked_data::PredicateObjectsVisitor<I_, V_>
 			{
-				visitor.object(self)?;
+				visitor.visit_object(self)?;
 				visitor.end()
 			}
 		}

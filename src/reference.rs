@@ -43,7 +43,7 @@ impl<I: Interpretation, V: Vocabulary, T: LinkedDataResource<I, V>> LinkedDataPr
 	where
 		S: crate::PredicateObjectsVisitor<I, V>,
 	{
-		visitor.object(self)?;
+		visitor.visit_object(self)?;
 		visitor.end()
 	}
 }

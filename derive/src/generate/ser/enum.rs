@@ -500,7 +500,7 @@ fn variant_visit_predicate(
 				}
 				VariantShape::Unit => {
 					quote! {
-						visitor.object(::linked_data::iref::Iri::new(#iri).unwrap())?;
+						visitor.visit_object(::linked_data::iref::Iri::new(#iri).unwrap())?;
 						visitor.end()
 					}
 				}
@@ -868,7 +868,7 @@ fn variant_subject_type(
 			where
 				S_: ::linked_data::PredicateObjectsVisitor<I_, V_>
 			{
-				visitor.object(self)?;
+				visitor.visit_object(self)?;
 				visitor.end()
 			}
 		}

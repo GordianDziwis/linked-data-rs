@@ -947,7 +947,7 @@ impl<I: Interpretation, V: Vocabulary, D: Domain<I, V>> Visitor<I, V>
 		value.accept_graph_visitor(graph_serializer)
 	}
 
-	fn named_graph<T>(&mut self, value: &T) -> Result<(), Self::Error>
+	fn visit_named_graph<T>(&mut self, value: &T) -> Result<(), Self::Error>
 	where
 		T: ?Sized + LinkedDataResource<I, V> + crate::LinkedDataGraph<I, V>,
 	{

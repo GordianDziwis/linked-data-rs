@@ -210,7 +210,7 @@ pub trait Visitor<I: Interpretation = (), V: Vocabulary = ()> {
 		T: ?Sized + LinkedDataGraph<I, V>;
 
 	/// Visits a named graph of the dataset.
-	fn named_graph<T>(&mut self, value: &T) -> Result<(), Self::Error>
+	fn visit_named_graph<T>(&mut self, value: &T) -> Result<(), Self::Error>
 	where
 		T: ?Sized + LinkedDataResource<I, V> + LinkedDataGraph<I, V>;
 
@@ -230,11 +230,11 @@ impl<I: Interpretation, V: Vocabulary, S: Visitor<I, V>> Visitor<I, V> for &mut 
 		S::visit_default_graph(self, value)
 	}
 
-	fn named_graph<T>(&mut self, value: &T) -> Result<(), Self::Error>
+	fn visit_named_graph<T>(&mut self, value: &T) -> Result<(), Self::Error>
 	where
 		T: ?Sized + LinkedDataResource<I, V> + LinkedDataGraph<I, V>,
 	{
-		S::named_graph(self, value)
+		S::visit_named_graph(self, value)
 	}
 
 	fn end(self) -> Result<Self::Ok, Self::Error> {

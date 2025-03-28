@@ -170,7 +170,7 @@ impl<I: Interpretation, V: Vocabulary, T: LinkedDataGraph<I, V>> LinkedData<I, V
 	where
 		S: crate::Visitor<I, V>,
 	{
-		visitor.named_graph(self)?;
+		visitor.visit_named_graph(self)?;
 		visitor.end()
 	}
 }

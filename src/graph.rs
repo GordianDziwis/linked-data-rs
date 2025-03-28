@@ -135,7 +135,7 @@ impl<I: Interpretation, V: Vocabulary, T: LinkedDataGraph<I, V>> LinkedDataSubje
 	where
 		S: crate::SubjectVisitor<I, V>,
 	{
-		serializer.graph(&self.0)?;
+		serializer.visit_graph(&self.0)?;
 		serializer.end()
 	}
 }

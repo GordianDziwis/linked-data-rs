@@ -212,7 +212,7 @@ where
 			if self.dataset.contains_named_graph(self.subject) {
 				let mut visited_graphs = self.visited_graphs.clone();
 				if visited_graphs.insert(self.subject).is_none() {
-					visitor.graph(&NamedGraphView {
+					visitor.visit_graph(&NamedGraphView {
 						dataset: self.dataset,
 						graph: self.subject,
 						visited_graphs: &visited_graphs,

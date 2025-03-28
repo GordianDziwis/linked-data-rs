@@ -1098,7 +1098,7 @@ impl<I: Interpretation, V: Vocabulary, D: Domain<I, V>> SubjectVisitor<I, V>
 		subjects.accept_objects_visitor(subjects_serializer)
 	}
 
-	fn graph<T>(&mut self, value: &T) -> Result<(), Self::Error>
+	fn visit_graph<T>(&mut self, value: &T) -> Result<(), Self::Error>
 	where
 		T: ?Sized + LinkedDataGraph<I, V>,
 	{

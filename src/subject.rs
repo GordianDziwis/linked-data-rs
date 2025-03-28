@@ -117,7 +117,7 @@ pub trait SubjectVisitor<I: Interpretation, V: Vocabulary> {
 		L: ?Sized + LinkedDataResource<I, V>,
 		T: ?Sized + LinkedDataPredicateObjects<I, V>;
 
-	fn graph<T>(&mut self, value: &T) -> Result<(), Self::Error>
+	fn visit_graph<T>(&mut self, value: &T) -> Result<(), Self::Error>
 	where
 		T: ?Sized + LinkedDataGraph<I, V>;
 
@@ -150,11 +150,11 @@ impl<I: Interpretation, V: Vocabulary, S: SubjectVisitor<I, V>> SubjectVisitor<I
 		S::visit_reverse_predicate(self, predicate, subjects)
 	}
 
-	fn graph<T>(&mut self, value: &T) -> Result<(), Self::Error>
+	fn visit_graph<T>(&mut self, value: &T) -> Result<(), Self::Error>
 	where
 		T: ?Sized + LinkedDataGraph<I, V>,
 	{
-		S::graph(self, value)
+		S::visit_graph(self, value)
 	}
 
 	fn include<T>(&mut self, value: &T) -> Result<(), Self::Error>

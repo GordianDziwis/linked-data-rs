@@ -61,8 +61,8 @@ where
 	}
 }
 
-impl<I: Interpretation, V: Vocabulary, D: Dataset<Resource = I::Resource>>
-	LinkedDataResource<I, V> for Object<'_, '_, D>
+impl<I: Interpretation, V: Vocabulary, D: Dataset<Resource = I::Resource>> LinkedDataResource<I, V>
+	for Object<'_, '_, D>
 where
 	I::Resource: LinkedDataResource<I, V>,
 {

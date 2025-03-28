@@ -20,8 +20,9 @@ impl<I: Interpretation, V: Vocabulary> LinkedDataGraph<I, V> for () {
 	}
 }
 
-impl<I: Interpretation, V: Vocabulary, T: ?Sized + LinkedDataGraph<I, V>> LinkedDataGraph<I, V>
-	for &T
+impl<I: Interpretation, V: Vocabulary, T> LinkedDataGraph<I, V> for &T
+where
+	T: ?Sized + LinkedDataGraph<I, V>,
 {
 	fn accept_graph_visitor<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
 	where
@@ -31,8 +32,9 @@ impl<I: Interpretation, V: Vocabulary, T: ?Sized + LinkedDataGraph<I, V>> Linked
 	}
 }
 
-impl<I: Interpretation, V: Vocabulary, T: ?Sized + LinkedDataGraph<I, V>> LinkedDataGraph<I, V>
-	for Box<T>
+impl<I: Interpretation, V: Vocabulary, T> LinkedDataGraph<I, V> for Box<T>
+where
+	T: ?Sized + LinkedDataGraph<I, V>,
 {
 	fn accept_graph_visitor<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
 	where
@@ -60,8 +62,9 @@ impl<I: Interpretation, V: Vocabulary> LinkedDataGraph<I, V> for IriBuf {
 	}
 }
 
-impl<I: Interpretation, V: Vocabulary, T: LinkedDataSubject<I, V> + LinkedDataResource<I, V>>
-	LinkedDataGraph<I, V> for [T]
+impl<I: Interpretation, V: Vocabulary, T> LinkedDataGraph<I, V> for [T]
+where
+	T: LinkedDataSubject<I, V> + LinkedDataResource<I, V>,
 {
 	fn accept_graph_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where
@@ -74,8 +77,9 @@ impl<I: Interpretation, V: Vocabulary, T: LinkedDataSubject<I, V> + LinkedDataRe
 	}
 }
 
-impl<I: Interpretation, V: Vocabulary, T: LinkedDataSubject<I, V> + LinkedDataResource<I, V>>
-	LinkedDataGraph<I, V> for Vec<T>
+impl<I: Interpretation, V: Vocabulary, T> LinkedDataGraph<I, V> for Vec<T>
+where
+	T: LinkedDataSubject<I, V> + LinkedDataResource<I, V>,
 {
 	fn accept_graph_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where
@@ -99,7 +103,10 @@ pub trait GraphVisitor<I: Interpretation, V: Vocabulary> {
 	fn end(self) -> Result<Self::Ok, Self::Error>;
 }
 
-impl<I: Interpretation, V: Vocabulary, S: GraphVisitor<I, V>> GraphVisitor<I, V> for &mut S {
+impl<I: Interpretation, V: Vocabulary, S> GraphVisitor<I, V> for &mut S
+where
+	S: GraphVisitor<I, V>,
+{
 	type Ok = ();
 	type Error = S::Error;
 
@@ -127,8 +134,9 @@ impl<I: Interpretation, V: Vocabulary, T> LinkedDataResource<I, V> for Anonymous
 	}
 }
 
-impl<I: Interpretation, V: Vocabulary, T: LinkedDataGraph<I, V>> LinkedDataSubject<I, V>
-	for AnonymousGraph<T>
+impl<I: Interpretation, V: Vocabulary, T> LinkedDataSubject<I, V> for AnonymousGraph<T>
+where
+	T: LinkedDataGraph<I, V>,
 {
 	fn accept_subject_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where
@@ -139,8 +147,9 @@ impl<I: Interpretation, V: Vocabulary, T: LinkedDataGraph<I, V>> LinkedDataSubje
 	}
 }
 
-impl<I: Interpretation, V: Vocabulary, T: LinkedDataGraph<I, V>> LinkedDataPredicateObjects<I, V>
-	for AnonymousGraph<T>
+impl<I: Interpretation, V: Vocabulary, T> LinkedDataPredicateObjects<I, V> for AnonymousGraph<T>
+where
+	T: LinkedDataGraph<I, V>,
 {
 	fn accept_objects_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where
@@ -151,8 +160,9 @@ impl<I: Interpretation, V: Vocabulary, T: LinkedDataGraph<I, V>> LinkedDataPredi
 	}
 }
 
-impl<I: Interpretation, V: Vocabulary, T: LinkedDataGraph<I, V>> LinkedDataGraph<I, V>
-	for AnonymousGraph<T>
+impl<I: Interpretation, V: Vocabulary, T> LinkedDataGraph<I, V> for AnonymousGraph<T>
+where
+	T: LinkedDataGraph<I, V>,
 {
 	fn accept_graph_visitor<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
 	where
@@ -162,8 +172,9 @@ impl<I: Interpretation, V: Vocabulary, T: LinkedDataGraph<I, V>> LinkedDataGraph
 	}
 }
 
-impl<I: Interpretation, V: Vocabulary, T: LinkedDataGraph<I, V>> LinkedData<I, V>
-	for AnonymousGraph<T>
+impl<I: Interpretation, V: Vocabulary, T> LinkedData<I, V> for AnonymousGraph<T>
+where
+	T: LinkedDataGraph<I, V>,
 {
 	fn accept_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where

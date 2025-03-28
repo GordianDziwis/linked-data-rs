@@ -24,8 +24,10 @@ impl<I: Interpretation, V: Vocabulary, T> LinkedDataResource<I, V> for Anonymous
 	}
 }
 
-impl<V: Vocabulary + IriVocabularyMut, I: Interpretation, T: LinkedDataPredicateObjects<I, V>>
-	LinkedDataSubject<I, V> for AnonymousBinding<'_, T>
+impl<I: Interpretation, V: Vocabulary, T> LinkedDataSubject<I, V> for AnonymousBinding<'_, T>
+where
+	V: IriVocabularyMut,
+	T: LinkedDataPredicateObjects<I, V>,
 {
 	fn accept_subject_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where
@@ -36,8 +38,11 @@ impl<V: Vocabulary + IriVocabularyMut, I: Interpretation, T: LinkedDataPredicate
 	}
 }
 
-impl<V: Vocabulary + IriVocabularyMut, I: Interpretation, T: LinkedDataPredicateObjects<I, V>>
-	LinkedDataPredicateObjects<I, V> for AnonymousBinding<'_, T>
+impl<I: Interpretation, V: Vocabulary, T> LinkedDataPredicateObjects<I, V>
+	for AnonymousBinding<'_, T>
+where
+	V: IriVocabularyMut,
+	T: LinkedDataPredicateObjects<I, V>,
 {
 	fn accept_objects_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where
@@ -48,8 +53,10 @@ impl<V: Vocabulary + IriVocabularyMut, I: Interpretation, T: LinkedDataPredicate
 	}
 }
 
-impl<V: Vocabulary + IriVocabularyMut, I: Interpretation, T: LinkedDataPredicateObjects<I, V>>
-	LinkedDataGraph<I, V> for AnonymousBinding<'_, T>
+impl<I: Interpretation, V: Vocabulary, T> LinkedDataGraph<I, V> for AnonymousBinding<'_, T>
+where
+	V: IriVocabularyMut,
+	T: LinkedDataPredicateObjects<I, V>,
 {
 	fn accept_graph_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where
@@ -60,8 +67,10 @@ impl<V: Vocabulary + IriVocabularyMut, I: Interpretation, T: LinkedDataPredicate
 	}
 }
 
-impl<V: Vocabulary + IriVocabularyMut, I: Interpretation, T: LinkedDataPredicateObjects<I, V>>
-	LinkedData<I, V> for AnonymousBinding<'_, T>
+impl<I: Interpretation, V: Vocabulary, T> LinkedData<I, V> for AnonymousBinding<'_, T>
+where
+	V: IriVocabularyMut,
+	T: LinkedDataPredicateObjects<I, V>,
 {
 	fn accept_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where

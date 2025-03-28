@@ -15,8 +15,9 @@ impl<T> From<T> for Ref<T> {
 	}
 }
 
-impl<I: Interpretation, V: Vocabulary, T: LinkedDataResource<I, V>> LinkedDataResource<I, V>
-	for Ref<T>
+impl<I: Interpretation, V: Vocabulary, T> LinkedDataResource<I, V> for Ref<T>
+where
+	T: LinkedDataResource<I, V>,
 {
 	fn interpretation(
 		&self,
@@ -36,8 +37,9 @@ impl<I: Interpretation, V: Vocabulary, T> LinkedDataSubject<I, V> for Ref<T> {
 	}
 }
 
-impl<I: Interpretation, V: Vocabulary, T: LinkedDataResource<I, V>> LinkedDataPredicateObjects<I, V>
-	for Ref<T>
+impl<I: Interpretation, V: Vocabulary, T> LinkedDataPredicateObjects<I, V> for Ref<T>
+where
+	T: LinkedDataResource<I, V>,
 {
 	fn accept_objects_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where
@@ -48,8 +50,9 @@ impl<I: Interpretation, V: Vocabulary, T: LinkedDataResource<I, V>> LinkedDataPr
 	}
 }
 
-impl<I: Interpretation, V: Vocabulary, T: LinkedDataResource<I, V>> LinkedDataGraph<I, V>
-	for Ref<T>
+impl<I: Interpretation, V: Vocabulary, T> LinkedDataGraph<I, V> for Ref<T>
+where
+	T: LinkedDataResource<I, V>,
 {
 	fn accept_graph_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where
@@ -60,7 +63,10 @@ impl<I: Interpretation, V: Vocabulary, T: LinkedDataResource<I, V>> LinkedDataGr
 	}
 }
 
-impl<I: Interpretation, V: Vocabulary, T: LinkedDataResource<I, V>> LinkedData<I, V> for Ref<T> {
+impl<I: Interpretation, V: Vocabulary, T> LinkedData<I, V> for Ref<T>
+where
+	T: LinkedDataResource<I, V>,
+{
 	fn accept_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: crate::Visitor<I, V>,

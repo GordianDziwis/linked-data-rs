@@ -166,8 +166,9 @@ pub trait LinkedData<I: Interpretation = (), V: Vocabulary = ()> {
 		S: Visitor<I, V>;
 }
 
-impl<I: Interpretation, V: Vocabulary, T: ?Sized + LinkedData<I, V>> LinkedData<I, V>
-	for &T
+impl<I: Interpretation, V: Vocabulary, T> LinkedData<I, V> for &T
+where
+	T: ?Sized + LinkedData<I, V>,
 {
 	fn accept_visitor<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
 	where
@@ -177,7 +178,10 @@ impl<I: Interpretation, V: Vocabulary, T: ?Sized + LinkedData<I, V>> LinkedData<
 	}
 }
 
-impl<I: Interpretation, V: Vocabulary, T: ?Sized + LinkedData<I, V>> LinkedData<I, V> for Box<T> {
+impl<I: Interpretation, V: Vocabulary, T> LinkedData<I, V> for Box<T>
+where
+	T: ?Sized + LinkedData<I, V>,
+{
 	fn accept_visitor<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: Visitor<I, V>,
@@ -219,7 +223,10 @@ pub trait Visitor<I: Interpretation = (), V: Vocabulary = ()> {
 }
 
 /// Any mutable reference to a visitor is itself a visitor.
-impl<I: Interpretation, V: Vocabulary, S: Visitor<I, V>> Visitor<I, V> for &mut S {
+impl<I: Interpretation, V: Vocabulary, S> Visitor<I, V> for &mut S
+where
+	S: Visitor<I, V>,
+{
 	type Ok = ();
 	type Error = S::Error;
 

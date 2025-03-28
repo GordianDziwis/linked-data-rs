@@ -26,8 +26,9 @@ impl<I: Interpretation, V: Vocabulary> LinkedDataSubject<I, V> for () {
 	}
 }
 
-impl<I: Interpretation, V: Vocabulary, T: ?Sized + LinkedDataSubject<I, V>>
-	LinkedDataSubject<I, V> for &T
+impl<I: Interpretation, V: Vocabulary, T> LinkedDataSubject<I, V> for &T
+where
+	T: ?Sized + LinkedDataSubject<I, V>,
 {
 	fn accept_subject_visitor<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
 	where
@@ -37,8 +38,9 @@ impl<I: Interpretation, V: Vocabulary, T: ?Sized + LinkedDataSubject<I, V>>
 	}
 }
 
-impl<I: Interpretation, V: Vocabulary, T: ?Sized + LinkedDataSubject<I, V>> LinkedDataSubject<I, V>
-	for Box<T>
+impl<I: Interpretation, V: Vocabulary, T> LinkedDataSubject<I, V> for Box<T>
+where
+	T: ?Sized + LinkedDataSubject<I, V>,
 {
 	fn accept_subject_visitor<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
 	where
@@ -111,7 +113,11 @@ pub trait SubjectVisitor<I: Interpretation, V: Vocabulary> {
 		T: ?Sized + LinkedDataPredicateObjects<I, V>;
 
 	/// Visit a reverse predicate of the graph.
-	fn visit_reverse_predicate<L, T>(&mut self, predicate: &L, subjects: &T) -> Result<(), Self::Error>
+	fn visit_reverse_predicate<L, T>(
+		&mut self,
+		predicate: &L,
+		subjects: &T,
+	) -> Result<(), Self::Error>
 	where
 		L: ?Sized + LinkedDataResource<I, V>,
 		T: ?Sized + LinkedDataPredicateObjects<I, V>;
@@ -127,8 +133,9 @@ pub trait SubjectVisitor<I: Interpretation, V: Vocabulary> {
 	fn end(self) -> Result<Self::Ok, Self::Error>;
 }
 
-impl<I: Interpretation, V: Vocabulary, S: SubjectVisitor<I, V>> SubjectVisitor<I, V>
-	for &mut S
+impl<I: Interpretation, V: Vocabulary, S> SubjectVisitor<I, V> for &mut S
+where
+	S: SubjectVisitor<I, V>,
 {
 	type Ok = ();
 	type Error = S::Error;
@@ -141,7 +148,11 @@ impl<I: Interpretation, V: Vocabulary, S: SubjectVisitor<I, V>> SubjectVisitor<I
 		S::visit_predicate(self, predicate, objects)
 	}
 
-	fn visit_reverse_predicate<L, T>(&mut self, predicate: &L, subjects: &T) -> Result<(), Self::Error>
+	fn visit_reverse_predicate<L, T>(
+		&mut self,
+		predicate: &L,
+		subjects: &T,
+	) -> Result<(), Self::Error>
 	where
 		L: ?Sized + LinkedDataResource<I, V>,
 		T: ?Sized + LinkedDataPredicateObjects<I, V>,

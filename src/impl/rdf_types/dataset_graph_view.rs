@@ -14,7 +14,7 @@ where
 	I::Resource: Eq + Hash + LinkedDataResource<I, V>,
 	D: PredicateTraversableDataset<Resource = I::Resource> + PatternMatchingDataset,
 {
-	fn visit_subject<S>(&self, mut serializer: S) -> Result<S::Ok, S::Error>
+	fn accept_subject_visitor<S>(&self, mut serializer: S) -> Result<S::Ok, S::Error>
 	where
 		S: SubjectVisitor<I, V>,
 	{
@@ -87,7 +87,7 @@ where
 	I::Resource: Eq + Hash + LinkedDataResource<I, V>,
 	D: PredicateTraversableDataset<Resource = I::Resource> + PatternMatchingDataset,
 {
-	fn visit_subject<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_subject_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: SubjectVisitor<I, V>,
 	{
@@ -166,7 +166,7 @@ where
 	D::Resource: Eq + Hash + LinkedDataResource<I, V>,
 	D: PredicateTraversableDataset<Resource = I::Resource> + PatternMatchingDataset,
 {
-	fn visit_subject<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_subject_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: SubjectVisitor<I, V>,
 	{

@@ -125,7 +125,7 @@ where
 		+ PredicateTraversableDataset<Resource = I::Resource>
 		+ PatternMatchingDataset,
 {
-	fn visit_subject<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_subject_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: SubjectVisitor<I, V>,
 	{
@@ -246,7 +246,7 @@ where
 		+ PredicateTraversableDataset
 		+ PatternMatchingDataset,
 {
-	fn visit_subject<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_subject_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: SubjectVisitor<I, V>,
 	{

@@ -131,7 +131,7 @@ impl<I: Interpretation, V: Vocabulary, T> LinkedDataResource<I, V> for Anonymous
 impl<I: Interpretation, V: Vocabulary, T: LinkedDataGraph<I, V>> LinkedDataSubject<I, V>
 	for AnonymousGraph<T>
 {
-	fn visit_subject<S>(&self, mut serializer: S) -> Result<S::Ok, S::Error>
+	fn accept_subject_visitor<S>(&self, mut serializer: S) -> Result<S::Ok, S::Error>
 	where
 		S: crate::SubjectVisitor<I, V>,
 	{

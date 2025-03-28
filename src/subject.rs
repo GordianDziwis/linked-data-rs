@@ -13,13 +13,13 @@ use crate::{
 
 /// Serialize a Linked-Data node.
 pub trait LinkedDataSubject<I: Interpretation = (), V: Vocabulary = ()> {
-	fn visit_subject<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+	fn accept_subject_visitor<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
 	where
 		S: SubjectVisitor<I, V>;
 }
 
 impl<I: Interpretation, V: Vocabulary> LinkedDataSubject<I, V> for () {
-	fn visit_subject<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+	fn accept_subject_visitor<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
 	where
 		S: SubjectVisitor<I, V>,
 	{
@@ -30,27 +30,27 @@ impl<I: Interpretation, V: Vocabulary> LinkedDataSubject<I, V> for () {
 impl<I: Interpretation, V: Vocabulary, T: ?Sized + LinkedDataSubject<I, V>>
 	LinkedDataSubject<I, V> for &T
 {
-	fn visit_subject<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+	fn accept_subject_visitor<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
 	where
 		S: SubjectVisitor<I, V>,
 	{
-		T::visit_subject(self, serializer)
+		T::accept_subject_visitor(self, serializer)
 	}
 }
 
 impl<I: Interpretation, V: Vocabulary, T: ?Sized + LinkedDataSubject<I, V>> LinkedDataSubject<I, V>
 	for Box<T>
 {
-	fn visit_subject<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+	fn accept_subject_visitor<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
 	where
 		S: SubjectVisitor<I, V>,
 	{
-		T::visit_subject(self, serializer)
+		T::accept_subject_visitor(self, serializer)
 	}
 }
 
 impl<I: Interpretation, V: Vocabulary> LinkedDataSubject<I, V> for Iri {
-	fn visit_subject<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+	fn accept_subject_visitor<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
 	where
 		S: SubjectVisitor<I, V>,
 	{
@@ -59,7 +59,7 @@ impl<I: Interpretation, V: Vocabulary> LinkedDataSubject<I, V> for Iri {
 }
 
 impl<I: Interpretation, V: Vocabulary> LinkedDataSubject<I, V> for IriBuf {
-	fn visit_subject<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+	fn accept_subject_visitor<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
 	where
 		S: SubjectVisitor<I, V>,
 	{
@@ -68,7 +68,7 @@ impl<I: Interpretation, V: Vocabulary> LinkedDataSubject<I, V> for IriBuf {
 }
 
 impl<I: Interpretation, V: Vocabulary> LinkedDataSubject<I, V> for BlankId {
-	fn visit_subject<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+	fn accept_subject_visitor<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
 	where
 		S: SubjectVisitor<I, V>,
 	{
@@ -77,7 +77,7 @@ impl<I: Interpretation, V: Vocabulary> LinkedDataSubject<I, V> for BlankId {
 }
 
 impl<I: Interpretation, V: Vocabulary> LinkedDataSubject<I, V> for BlankIdBuf {
-	fn visit_subject<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+	fn accept_subject_visitor<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
 	where
 		S: SubjectVisitor<I, V>,
 	{
@@ -90,13 +90,13 @@ where
 	T: LinkedDataSubject<I, V>,
 	B: LinkedDataSubject<I, V>,
 {
-	fn visit_subject<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+	fn accept_subject_visitor<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
 	where
 		S: SubjectVisitor<I, V>,
 	{
 		match self {
-			Self::Iri(i) => i.visit_subject(serializer),
-			Self::Blank(b) => b.visit_subject(serializer),
+			Self::Iri(i) => i.accept_subject_visitor(serializer),
+			Self::Blank(b) => b.accept_subject_visitor(serializer),
 		}
 	}
 }

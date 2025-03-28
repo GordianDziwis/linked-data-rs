@@ -64,7 +64,7 @@ where
 		ResourceInterpretation::Uninterpreted(_) => interpretation.new_resource(vocabulary),
 	};
 
-	value.visit_subject(QuadPropertiesSerializer {
+	value.accept_subject_visitor(QuadPropertiesSerializer {
 		vocabulary,
 		interpretation,
 		domain: &mut InterpretationDomain,
@@ -149,7 +149,7 @@ where
 	let i = value.interpretation(vocabulary, interpretation);
 	let subject = LexicalDomain.subject(vocabulary, interpretation, i)?;
 
-	value.visit_subject(QuadPropertiesSerializer {
+	value.accept_subject_visitor(QuadPropertiesSerializer {
 		vocabulary,
 		interpretation,
 		domain: &mut LexicalDomain,
@@ -1002,7 +1002,7 @@ impl<I: Interpretation, V: Vocabulary, D: Domain<I, V>> GraphVisitor<I, V>
 			subject: SubjectOrObject::Subject(&term),
 		};
 
-		value.visit_subject(properties_serializer)
+		value.accept_subject_visitor(properties_serializer)
 	}
 
 	fn end(self) -> Result<Self::Ok, Self::Error> {
@@ -1124,7 +1124,7 @@ impl<I: Interpretation, V: Vocabulary, D: Domain<I, V>> SubjectVisitor<I, V>
 			.domain
 			.subject(self.vocabulary, self.interpretation, i)?;
 
-		value.visit_subject(QuadPropertiesSerializer {
+		value.accept_subject_visitor(QuadPropertiesSerializer {
 			vocabulary: self.vocabulary,
 			interpretation: self.interpretation,
 			domain: self.domain,
@@ -1174,7 +1174,7 @@ impl<I: Interpretation, V: Vocabulary, D: Domain<I, V>> PredicateObjectsVisitor<
 			subject: SubjectOrObject::Object(&term),
 		};
 
-		value.visit_subject(subject_serializer)?;
+		value.accept_subject_visitor(subject_serializer)?;
 		self.result.push(Quad(
 			self.subject.clone(),
 			self.predicate.clone(),
@@ -1223,7 +1223,7 @@ impl<I: Interpretation, V: Vocabulary, D: Domain<I, V>> PredicateObjectsVisitor<
 			subject: SubjectOrObject::Subject(&subject),
 		};
 
-		value.visit_subject(subject_serializer)?;
+		value.accept_subject_visitor(subject_serializer)?;
 		self.result.push(Quad(
 			subject,
 			self.predicate.clone(),

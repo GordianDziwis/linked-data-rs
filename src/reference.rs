@@ -28,7 +28,7 @@ impl<I: Interpretation, V: Vocabulary, T: LinkedDataResource<I, V>> LinkedDataRe
 }
 
 impl<I: Interpretation, V: Vocabulary, T> LinkedDataSubject<I, V> for Ref<T> {
-	fn visit_subject<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+	fn accept_subject_visitor<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
 	where
 		S: crate::SubjectVisitor<I, V>,
 	{

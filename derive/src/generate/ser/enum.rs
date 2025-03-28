@@ -212,7 +212,7 @@ pub fn generate(
 		}
 
 		impl #subject_impl_generics ::linked_data::LinkedDataSubject<I_, V_> for #ident #ty_generics #subject_where_clauses {
-			fn visit_subject<S_>(&self, mut visitor: S_) -> Result<S_::Ok, S_::Error>
+			fn accept_subject_visitor<S_>(&self, mut visitor: S_) -> Result<S_::Ok, S_::Error>
 			where
 				S_: ::linked_data::SubjectVisitor<I_, V_>
 			{
@@ -433,7 +433,7 @@ fn variant_visit_subject(
 				);
 
 				quote! {
-					<#ty as ::linked_data::LinkedDataSubject<I_, V_>>::visit_subject(#id, visitor)
+					<#ty as ::linked_data::LinkedDataSubject<I_, V_>>::accept_subject_visitor(#id, visitor)
 				}
 			}
 			VariantShape::Compound(inner_ty) => {
@@ -444,7 +444,7 @@ fn variant_visit_subject(
 				vocabulary_bounds.add(inner_ty.visit_vocabulary_bounds);
 
 				quote! {
-					#inner_id #input .visit_subject(visitor)
+					#inner_id #input .accept_subject_visitor(visitor)
 				}
 			}
 			VariantShape::Unit => {
@@ -854,7 +854,7 @@ fn variant_subject_type(
 		}
 
 		impl #visit_impl_generics ::linked_data::LinkedDataSubject<I_, V_> for #subject_id #ty_generics #visit_where_clauses {
-			fn visit_subject<S_>(&self, mut visitor: S_) -> Result<S_::Ok, S_::Error>
+			fn accept_subject_visitor<S_>(&self, mut visitor: S_) -> Result<S_::Ok, S_::Error>
 			where
 				S_: ::linked_data::SubjectVisitor<I_, V_>
 			{

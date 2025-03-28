@@ -27,7 +27,7 @@ impl<I: Interpretation, V: Vocabulary, T> LinkedDataResource<I, V> for Anonymous
 impl<V: Vocabulary + IriVocabularyMut, I: Interpretation, T: LinkedDataPredicateObjects<I, V>>
 	LinkedDataSubject<I, V> for AnonymousBinding<'_, T>
 {
-	fn visit_subject<S>(&self, mut serializer: S) -> Result<S::Ok, S::Error>
+	fn accept_subject_visitor<S>(&self, mut serializer: S) -> Result<S::Ok, S::Error>
 	where
 		S: SubjectVisitor<I, V>,
 	{

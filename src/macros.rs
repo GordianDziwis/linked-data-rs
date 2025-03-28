@@ -66,7 +66,7 @@ macro_rules! json_literal {
 		}
 
 		impl<V: $crate::rdf_types::Vocabulary, I: $crate::rdf_types::Interpretation> $crate::LinkedDataSubject<I, V> for $ty {
-			fn visit_subject<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
+			fn accept_subject_visitor<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
 			where
 				S: $crate::SubjectVisitor<I, V>,
 			{

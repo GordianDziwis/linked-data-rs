@@ -68,7 +68,7 @@ fn variant_compound_fields(
 				);
 
 				quote! {
-					<#ty as ::linked_data::LinkedDataSubject<I_, V_>>::visit_subject(#field_ref, &mut visitor)?;
+					<#ty as ::linked_data::LinkedDataSubject<I_, V_>>::accept_subject_visitor(#field_ref, &mut visitor)?;
 				}
 			} else {
 				match field_attrs.iri {

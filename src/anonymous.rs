@@ -27,47 +27,47 @@ impl<I: Interpretation, V: Vocabulary, T> LinkedDataResource<I, V> for Anonymous
 impl<V: Vocabulary + IriVocabularyMut, I: Interpretation, T: LinkedDataPredicateObjects<I, V>>
 	LinkedDataSubject<I, V> for AnonymousBinding<'_, T>
 {
-	fn accept_subject_visitor<S>(&self, mut serializer: S) -> Result<S::Ok, S::Error>
+	fn accept_subject_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: SubjectVisitor<I, V>,
 	{
-		serializer.visit_predicate(self.0, self.1)?;
-		serializer.end()
+		visitor.visit_predicate(self.0, self.1)?;
+		visitor.end()
 	}
 }
 
 impl<V: Vocabulary + IriVocabularyMut, I: Interpretation, T: LinkedDataPredicateObjects<I, V>>
 	LinkedDataPredicateObjects<I, V> for AnonymousBinding<'_, T>
 {
-	fn accept_objects_visitor<S>(&self, mut serializer: S) -> Result<S::Ok, S::Error>
+	fn accept_objects_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: PredicateObjectsVisitor<I, V>,
 	{
-		serializer.visit_object(self)?;
-		serializer.end()
+		visitor.visit_object(self)?;
+		visitor.end()
 	}
 }
 
 impl<V: Vocabulary + IriVocabularyMut, I: Interpretation, T: LinkedDataPredicateObjects<I, V>>
 	LinkedDataGraph<I, V> for AnonymousBinding<'_, T>
 {
-	fn accept_graph_visitor<S>(&self, mut serializer: S) -> Result<S::Ok, S::Error>
+	fn accept_graph_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: GraphVisitor<I, V>,
 	{
-		serializer.subject(self)?;
-		serializer.end()
+		visitor.subject(self)?;
+		visitor.end()
 	}
 }
 
 impl<V: Vocabulary + IriVocabularyMut, I: Interpretation, T: LinkedDataPredicateObjects<I, V>>
 	LinkedData<I, V> for AnonymousBinding<'_, T>
 {
-	fn accept_visitor<S>(&self, mut serializer: S) -> Result<S::Ok, S::Error>
+	fn accept_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: Visitor<I, V>,
 	{
-		serializer.visit_default_graph(self)?;
-		serializer.end()
+		visitor.visit_default_graph(self)?;
+		visitor.end()
 	}
 }

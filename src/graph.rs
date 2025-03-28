@@ -5,7 +5,6 @@ use crate::{LinkedData, LinkedDataPredicateObjects, LinkedDataResource, LinkedDa
 
 // use crate::SerializeSubject;
 
-/// Serialize a Linked-Data graph.
 pub trait LinkedDataGraph<I: Interpretation, V: Vocabulary> {
 	fn accept_graph_visitor<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
 	where
@@ -131,12 +130,12 @@ impl<I: Interpretation, V: Vocabulary, T> LinkedDataResource<I, V> for Anonymous
 impl<I: Interpretation, V: Vocabulary, T: LinkedDataGraph<I, V>> LinkedDataSubject<I, V>
 	for AnonymousGraph<T>
 {
-	fn accept_subject_visitor<S>(&self, mut serializer: S) -> Result<S::Ok, S::Error>
+	fn accept_subject_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: crate::SubjectVisitor<I, V>,
 	{
-		serializer.visit_graph(&self.0)?;
-		serializer.end()
+		visitor.visit_graph(&self.0)?;
+		visitor.end()
 	}
 }
 

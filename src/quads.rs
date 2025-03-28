@@ -18,17 +18,19 @@ use crate::{
 	SubjectVisitor, Visitor,
 };
 
-pub fn to_interpreted_quads<I: Interpretation, V: Vocabulary>(
+pub fn to_interpreted_quads<I, V>(
 	vocabulary: &mut V,
 	interpretation: &mut I,
 	value: &impl LinkedData<I, V>,
 ) -> Result<Vec<InterpretedQuad<I>>, IntoQuadsError>
 where
-	I: InterpretationMut<V> + TermInterpretationMut<V::Iri, V::BlankId, V::Literal>,
-	I::Resource: Clone,
-	V: IriVocabularyMut + LiteralVocabularyMut,
+	V: Vocabulary + IriVocabularyMut + LiteralVocabularyMut,
 	V::Iri: Clone,
 	V::BlankId: Clone,
+	I: Interpretation
+		+ InterpretationMut<V>
+		+ TermInterpretationMut<V::Iri, V::BlankId, V::Literal>,
+	I::Resource: Clone,
 {
 	value.visit(QuadSerializer {
 		vocabulary,
@@ -38,21 +40,22 @@ where
 	})
 }
 
-pub fn to_interpreted_subject_quads<I: Interpretation, V: Vocabulary>(
+pub fn to_interpreted_subject_quads<I, V>(
 	vocabulary: &mut V,
 	interpretation: &mut I,
 	graph: Option<&I::Resource>,
 	value: &(impl LinkedDataSubject<I, V> + LinkedDataResource<I, V>),
 ) -> Result<(I::Resource, Vec<InterpretedQuad<I>>), IntoQuadsError>
 where
-	I: InterpretationMut<V>
+	V: Vocabulary + IriVocabularyMut + LiteralVocabularyMut,
+	V::Iri: Clone,
+	V::BlankId: Clone,
+	I: Interpretation
+		+ InterpretationMut<V>
 		+ IriInterpretationMut<V::Iri>
 		+ BlankIdInterpretationMut<V::BlankId>
 		+ LiteralInterpretationMut<V::Literal>,
 	I::Resource: Clone,
-	V: IriVocabularyMut + LiteralVocabularyMut,
-	V::Iri: Clone,
-	V::BlankId: Clone,
 {
 	let mut result = Vec::new();
 
@@ -73,20 +76,21 @@ where
 	Ok((subject, result))
 }
 
-pub fn to_interpreted_graph_quads<I: Interpretation, V: Vocabulary>(
+pub fn to_interpreted_graph_quads<I, V>(
 	vocabulary: &mut V,
 	interpretation: &mut I,
 	value: &(impl LinkedDataGraph<I, V> + LinkedDataResource<I, V>),
 ) -> Result<(I::Resource, Vec<InterpretedQuad<I>>), IntoQuadsError>
 where
-	I: InterpretationMut<V>
+	V: Vocabulary + IriVocabularyMut + LiteralVocabularyMut,
+	V::Iri: Clone,
+	V::BlankId: Clone,
+	I: Interpretation
+		+ InterpretationMut<V>
 		+ IriInterpretationMut<V::Iri>
 		+ BlankIdInterpretationMut<V::BlankId>
 		+ LiteralInterpretationMut<V::Literal>,
 	I::Resource: Clone,
-	V: IriVocabularyMut + LiteralVocabularyMut,
-	V::Iri: Clone,
-	V::BlankId: Clone,
 {
 	let mut result = Vec::new();
 
@@ -106,13 +110,15 @@ where
 	Ok((graph, result))
 }
 
-pub fn to_lexical_quads_with<I: Interpretation, V: Vocabulary>(
+pub fn to_lexical_quads_with<I, V>(
 	vocabulary: &mut V,
 	interpretation: &mut I,
 	value: &impl LinkedData<I, V>,
 ) -> Result<Vec<RdfQuad>, IntoQuadsError>
 where
-	I: InterpretationMut<V>
+	V: Vocabulary,
+	I: Interpretation
+		+ InterpretationMut<V>
 		+ ReverseTermInterpretation<Iri = V::Iri, BlankId = V::BlankId, Literal = V::Literal>,
 {
 	let mut domain = LexicalDomain;
@@ -125,14 +131,16 @@ where
 	})
 }
 
-pub fn to_lexical_subject_quads_with<I: Interpretation, V: Vocabulary>(
+pub fn to_lexical_subject_quads_with<I, V>(
 	vocabulary: &mut V,
 	interpretation: &mut I,
 	graph: Option<&Id>,
 	value: &(impl LinkedDataSubject<I, V> + LinkedDataResource<I, V>),
 ) -> Result<(Id, Vec<RdfQuad>), IntoQuadsError>
 where
-	I: InterpretationMut<V>
+	V: Vocabulary,
+	I: Interpretation
+		+ InterpretationMut<V>
 		+ ReverseTermInterpretation<Iri = V::Iri, BlankId = V::BlankId, Literal = V::Literal>,
 	I::Resource: Clone,
 {
@@ -171,16 +179,17 @@ pub fn to_lexical_subject_quads<G: Generator>(
 	to_lexical_subject_quads_with(&mut (), &mut interpretation, graph, value)
 }
 
-pub fn to_quads_with<I: InterpretationMut<V>, V: Vocabulary>(
+pub fn to_quads_with<I, V>(
 	vocabulary: &mut V,
 	interpretation: &mut I,
 	value: &impl LinkedData<I, V>,
 ) -> Result<Vec<RdfQuad<V>>, IntoQuadsError>
 where
-	V: IriVocabularyMut + LiteralVocabularyMut,
+	V: Vocabulary + IriVocabularyMut + LiteralVocabularyMut,
 	V::BlankId: Clone,
 	V::Iri: Clone,
 	V::Literal: Clone,
+	I: InterpretationMut<V>,
 	I: ReverseTermInterpretation<Iri = V::Iri, BlankId = V::BlankId, Literal = V::Literal>,
 {
 	let mut domain = VocabularyDomain;
@@ -331,7 +340,13 @@ where
 	type Subject = RdfId<V>;
 	type Predicate = V::Iri;
 	type Object = Term<RdfId<V>, V::Literal>;
-	type ObjectRef<'a> = Term<&'a RdfId<V>, &'a V::Literal> where V::Iri: 'a, V::BlankId: 'a, V::Literal: 'a, I::Resource: 'a;
+	type ObjectRef<'a>
+		= Term<&'a RdfId<V>, &'a V::Literal>
+	where
+		V::Iri: 'a,
+		V::BlankId: 'a,
+		V::Literal: 'a,
+		I::Resource: 'a;
 
 	fn subject(
 		&mut self,
@@ -502,7 +517,13 @@ where
 	type Subject = I::Resource;
 	type Predicate = I::Resource;
 	type Object = I::Resource;
-	type ObjectRef<'a> = &'a I::Resource where V::Iri: 'a, V::BlankId: 'a, V::Literal: 'a, I::Resource: 'a;
+	type ObjectRef<'a>
+		= &'a I::Resource
+	where
+		V::Iri: 'a,
+		V::BlankId: 'a,
+		V::Literal: 'a,
+		I::Resource: 'a;
 
 	fn subject(
 		&mut self,
@@ -715,7 +736,13 @@ where
 	type Subject = Id;
 	type Predicate = IriBuf;
 	type Object = Term;
-	type ObjectRef<'a> = Term<&'a Id, &'a rdf_types::Literal> where V::Iri: 'a, V::BlankId: 'a, V::Literal: 'a, I::Resource: 'a;
+	type ObjectRef<'a>
+		= Term<&'a Id, &'a rdf_types::Literal>
+	where
+		V::Iri: 'a,
+		V::BlankId: 'a,
+		V::Literal: 'a,
+		I::Resource: 'a;
 
 	fn subject(
 		&mut self,
@@ -899,8 +926,8 @@ struct QuadSerializer<'a, I: Interpretation, V: Vocabulary, D: Domain<I, V>> {
 	result: Vec<DomainQuad<I, V, D>>,
 }
 
-impl<'a, I: Interpretation, V: Vocabulary, D: Domain<I, V>> Visitor<I, V>
-	for QuadSerializer<'a, I, V, D>
+impl<I: Interpretation, V: Vocabulary, D: Domain<I, V>> Visitor<I, V>
+	for QuadSerializer<'_, I, V, D>
 {
 	type Ok = Vec<DomainQuad<I, V, D>>;
 	type Error = IntoQuadsError;
@@ -951,8 +978,8 @@ struct QuadGraphSerializer<'a, I: Interpretation, V: Vocabulary, D: Domain<I, V>
 	graph: Option<&'a D::Subject>,
 }
 
-impl<'a, I: Interpretation, V: Vocabulary, D: Domain<I, V>> GraphVisitor<I, V>
-	for QuadGraphSerializer<'a, I, V, D>
+impl<I: Interpretation, V: Vocabulary, D: Domain<I, V>> GraphVisitor<I, V>
+	for QuadGraphSerializer<'_, I, V, D>
 {
 	type Ok = ();
 	type Error = IntoQuadsError;
@@ -1015,8 +1042,8 @@ impl<'a, I: Interpretation, V: Vocabulary, D: Domain<I, V>> SubjectOrObject<'a, 
 	}
 }
 
-impl<'a, I: Interpretation, V: Vocabulary, D: Domain<I, V>> SubjectVisitor<I, V>
-	for QuadPropertiesSerializer<'a, I, V, D>
+impl<I: Interpretation, V: Vocabulary, D: Domain<I, V>> SubjectVisitor<I, V>
+	for QuadPropertiesSerializer<'_, I, V, D>
 {
 	type Ok = ();
 	type Error = IntoQuadsError;
@@ -1124,8 +1151,8 @@ struct ObjectsSerializer<'a, I: Interpretation, V: Vocabulary, D: Domain<I, V>> 
 	predicate: D::Predicate,
 }
 
-impl<'a, I: Interpretation, V: Vocabulary, D: Domain<I, V>> PredicateObjectsVisitor<I, V>
-	for ObjectsSerializer<'a, I, V, D>
+impl<I: Interpretation, V: Vocabulary, D: Domain<I, V>> PredicateObjectsVisitor<I, V>
+	for ObjectsSerializer<'_, I, V, D>
 {
 	type Ok = ();
 	type Error = IntoQuadsError;
@@ -1172,8 +1199,8 @@ struct ReversePredicateSerializer<'a, I: Interpretation, V: Vocabulary, D: Domai
 	predicate: D::Predicate,
 }
 
-impl<'a, I: Interpretation, V: Vocabulary, D: Domain<I, V>> PredicateObjectsVisitor<I, V>
-	for ReversePredicateSerializer<'a, I, V, D>
+impl<I: Interpretation, V: Vocabulary, D: Domain<I, V>> PredicateObjectsVisitor<I, V>
+	for ReversePredicateSerializer<'_, I, V, D>
 {
 	type Ok = ();
 	type Error = IntoQuadsError;

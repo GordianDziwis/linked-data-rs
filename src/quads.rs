@@ -1073,7 +1073,7 @@ impl<I: Interpretation, V: Vocabulary, D: Domain<I, V>> SubjectVisitor<I, V>
 		value.accept_objects_visitor(objects_serializer)
 	}
 
-	fn reverse_predicate<L, T>(&mut self, predicate: &L, subjects: &T) -> Result<(), Self::Error>
+	fn visit_reverse_predicate<L, T>(&mut self, predicate: &L, subjects: &T) -> Result<(), Self::Error>
 	where
 		L: ?Sized + LinkedDataResource<I, V>,
 		T: ?Sized + crate::LinkedDataPredicateObjects<I, V>,

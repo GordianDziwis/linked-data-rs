@@ -112,7 +112,7 @@ pub trait SubjectVisitor<I: Interpretation, V: Vocabulary> {
 		T: ?Sized + LinkedDataPredicateObjects<I, V>;
 
 	/// Visit a reverse predicate of the graph.
-	fn reverse_predicate<L, T>(&mut self, predicate: &L, subjects: &T) -> Result<(), Self::Error>
+	fn visit_reverse_predicate<L, T>(&mut self, predicate: &L, subjects: &T) -> Result<(), Self::Error>
 	where
 		L: ?Sized + LinkedDataResource<I, V>,
 		T: ?Sized + LinkedDataPredicateObjects<I, V>;
@@ -142,12 +142,12 @@ impl<I: Interpretation, V: Vocabulary, S: SubjectVisitor<I, V>> SubjectVisitor<I
 		S::visit_predicate(self, predicate, objects)
 	}
 
-	fn reverse_predicate<L, T>(&mut self, predicate: &L, subjects: &T) -> Result<(), Self::Error>
+	fn visit_reverse_predicate<L, T>(&mut self, predicate: &L, subjects: &T) -> Result<(), Self::Error>
 	where
 		L: ?Sized + LinkedDataResource<I, V>,
 		T: ?Sized + LinkedDataPredicateObjects<I, V>,
 	{
-		S::reverse_predicate(self, predicate, subjects)
+		S::visit_reverse_predicate(self, predicate, subjects)
 	}
 
 	fn graph<T>(&mut self, value: &T) -> Result<(), Self::Error>

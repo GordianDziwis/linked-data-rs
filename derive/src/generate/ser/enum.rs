@@ -234,7 +234,7 @@ pub fn generate(
 		}
 
 		impl #graph_impl_generics ::linked_data::LinkedDataGraph<I_, V_> for #ident #ty_generics #graph_where_clauses {
-			fn visit_graph<S_>(&self, mut visitor: S_) -> Result<S_::Ok, S_::Error>
+			fn accept_graph_visitor<S_>(&self, mut visitor: S_) -> Result<S_::Ok, S_::Error>
 			where
 				S_: ::linked_data::GraphVisitor<I_, V_>
 			{
@@ -564,7 +564,7 @@ fn variant_visit_graph(
 						::linked_data::AnonymousBinding(
 							::linked_data::iref::Iri::new(#iri).unwrap(),
 							#id
-						).visit_graph(visitor)
+						).accept_graph_visitor(visitor)
 					}
 				}
 				VariantShape::Compound(inner_ty) => {
@@ -578,7 +578,7 @@ fn variant_visit_graph(
 						::linked_data::AnonymousBinding(
 							::linked_data::iref::Iri::new(#iri).unwrap(),
 							&#inner_id #input
-						).visit_graph(visitor)
+						).accept_graph_visitor(visitor)
 					}
 				}
 				VariantShape::Unit => {
@@ -599,7 +599,7 @@ fn variant_visit_graph(
 				);
 
 				quote! {
-					<#ty as ::linked_data::LinkedDataGraph<I_, V_>>::visit_graph(#id, visitor)
+					<#ty as ::linked_data::LinkedDataGraph<I_, V_>>::accept_graph_visitor(#id, visitor)
 				}
 			}
 			VariantShape::Compound(inner_ty) => {
@@ -610,7 +610,7 @@ fn variant_visit_graph(
 				vocabulary_bounds.add(inner_ty.visit_vocabulary_bounds);
 
 				quote! {
-					#inner_id #input .visit_graph(visitor)
+					#inner_id #input .accept_graph_visitor(visitor)
 				}
 			}
 			VariantShape::Unit => {
@@ -874,7 +874,7 @@ fn variant_subject_type(
 		}
 
 		impl #visit_impl_generics ::linked_data::LinkedDataGraph<I_, V_> for #subject_id #ty_generics #visit_where_clauses {
-			fn visit_graph<S_>(&self, mut visitor: S_) -> Result<S_::Ok, S_::Error>
+			fn accept_graph_visitor<S_>(&self, mut visitor: S_) -> Result<S_::Ok, S_::Error>
 			where
 				S_: ::linked_data::GraphVisitor<I_, V_>
 			{

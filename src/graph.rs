@@ -7,13 +7,13 @@ use crate::{LinkedData, LinkedDataPredicateObjects, LinkedDataResource, LinkedDa
 
 /// Serialize a Linked-Data graph.
 pub trait LinkedDataGraph<I: Interpretation, V: Vocabulary> {
-	fn visit_graph<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_graph_visitor<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: GraphVisitor<I, V>;
 }
 
 impl<I: Interpretation, V: Vocabulary> LinkedDataGraph<I, V> for () {
-	fn visit_graph<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_graph_visitor<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: GraphVisitor<I, V>,
 	{
@@ -24,27 +24,27 @@ impl<I: Interpretation, V: Vocabulary> LinkedDataGraph<I, V> for () {
 impl<I: Interpretation, V: Vocabulary, T: ?Sized + LinkedDataGraph<I, V>> LinkedDataGraph<I, V>
 	for &T
 {
-	fn visit_graph<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_graph_visitor<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: GraphVisitor<I, V>,
 	{
-		T::visit_graph(self, visitor)
+		T::accept_graph_visitor(self, visitor)
 	}
 }
 
 impl<I: Interpretation, V: Vocabulary, T: ?Sized + LinkedDataGraph<I, V>> LinkedDataGraph<I, V>
 	for Box<T>
 {
-	fn visit_graph<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_graph_visitor<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: GraphVisitor<I, V>,
 	{
-		T::visit_graph(self, visitor)
+		T::accept_graph_visitor(self, visitor)
 	}
 }
 
 impl<I: Interpretation, V: Vocabulary> LinkedDataGraph<I, V> for Iri {
-	fn visit_graph<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_graph_visitor<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: GraphVisitor<I, V>,
 	{
@@ -53,7 +53,7 @@ impl<I: Interpretation, V: Vocabulary> LinkedDataGraph<I, V> for Iri {
 }
 
 impl<I: Interpretation, V: Vocabulary> LinkedDataGraph<I, V> for IriBuf {
-	fn visit_graph<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_graph_visitor<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: GraphVisitor<I, V>,
 	{
@@ -64,7 +64,7 @@ impl<I: Interpretation, V: Vocabulary> LinkedDataGraph<I, V> for IriBuf {
 impl<I: Interpretation, V: Vocabulary, T: LinkedDataSubject<I, V> + LinkedDataResource<I, V>>
 	LinkedDataGraph<I, V> for [T]
 {
-	fn visit_graph<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_graph_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: GraphVisitor<I, V>,
 	{
@@ -78,7 +78,7 @@ impl<I: Interpretation, V: Vocabulary, T: LinkedDataSubject<I, V> + LinkedDataRe
 impl<I: Interpretation, V: Vocabulary, T: LinkedDataSubject<I, V> + LinkedDataResource<I, V>>
 	LinkedDataGraph<I, V> for Vec<T>
 {
-	fn visit_graph<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_graph_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: GraphVisitor<I, V>,
 	{
@@ -155,11 +155,11 @@ impl<I: Interpretation, V: Vocabulary, T: LinkedDataGraph<I, V>> LinkedDataPredi
 impl<I: Interpretation, V: Vocabulary, T: LinkedDataGraph<I, V>> LinkedDataGraph<I, V>
 	for AnonymousGraph<T>
 {
-	fn visit_graph<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_graph_visitor<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: GraphVisitor<I, V>,
 	{
-		T::visit_graph(&self.0, visitor)
+		T::accept_graph_visitor(&self.0, visitor)
 	}
 }
 

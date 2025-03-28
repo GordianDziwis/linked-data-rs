@@ -99,7 +99,7 @@ where
 		ResourceInterpretation::Uninterpreted(_) => interpretation.new_resource(vocabulary),
 	};
 
-	value.visit_graph(QuadGraphSerializer {
+	value.accept_graph_visitor(QuadGraphSerializer {
 		vocabulary,
 		interpretation,
 		domain: &mut InterpretationDomain,
@@ -944,7 +944,7 @@ impl<I: Interpretation, V: Vocabulary, D: Domain<I, V>> Visitor<I, V>
 			graph: None,
 		};
 
-		value.visit_graph(graph_serializer)
+		value.accept_graph_visitor(graph_serializer)
 	}
 
 	fn named_graph<T>(&mut self, value: &T) -> Result<(), Self::Error>
@@ -962,7 +962,7 @@ impl<I: Interpretation, V: Vocabulary, D: Domain<I, V>> Visitor<I, V>
 			graph: Some(&graph),
 		};
 
-		value.visit_graph(graph_serializer)
+		value.accept_graph_visitor(graph_serializer)
 	}
 
 	fn end(self) -> Result<Self::Ok, Self::Error> {
@@ -1112,7 +1112,7 @@ impl<I: Interpretation, V: Vocabulary, D: Domain<I, V>> SubjectVisitor<I, V>
 			graph: Some(graph),
 		};
 
-		value.visit_graph(graph_serializer)
+		value.accept_graph_visitor(graph_serializer)
 	}
 
 	fn include<T>(&mut self, value: &T) -> Result<(), Self::Error>

@@ -51,7 +51,7 @@ impl<I: Interpretation, V: Vocabulary, T: LinkedDataResource<I, V>> LinkedDataPr
 impl<I: Interpretation, V: Vocabulary, T: LinkedDataResource<I, V>> LinkedDataGraph<I, V>
 	for Ref<T>
 {
-	fn visit_graph<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_graph_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: crate::GraphVisitor<I, V>,
 	{

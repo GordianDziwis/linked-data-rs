@@ -18,7 +18,7 @@ where
 		+ PredicateTraversableDataset
 		+ PatternMatchingDataset,
 {
-	fn visit_graph<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_graph_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: GraphVisitor<I, V>,
 	{
@@ -300,7 +300,7 @@ where
 		+ PredicateTraversableDataset
 		+ PatternMatchingDataset,
 {
-	fn visit_graph<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_graph_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: GraphVisitor<I, V>,
 	{

@@ -51,7 +51,7 @@ impl<V: Vocabulary + IriVocabularyMut, I: Interpretation, T: LinkedDataPredicate
 impl<V: Vocabulary + IriVocabularyMut, I: Interpretation, T: LinkedDataPredicateObjects<I, V>>
 	LinkedDataGraph<I, V> for AnonymousBinding<'_, T>
 {
-	fn visit_graph<S>(&self, mut serializer: S) -> Result<S::Ok, S::Error>
+	fn accept_graph_visitor<S>(&self, mut serializer: S) -> Result<S::Ok, S::Error>
 	where
 		S: GraphVisitor<I, V>,
 	{

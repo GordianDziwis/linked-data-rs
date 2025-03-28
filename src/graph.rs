@@ -143,7 +143,7 @@ impl<I: Interpretation, V: Vocabulary, T: LinkedDataGraph<I, V>> LinkedDataSubje
 impl<I: Interpretation, V: Vocabulary, T: LinkedDataGraph<I, V>> LinkedDataPredicateObjects<I, V>
 	for AnonymousGraph<T>
 {
-	fn visit_objects<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_objects_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: crate::PredicateObjectsVisitor<I, V>,
 	{

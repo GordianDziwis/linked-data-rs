@@ -223,7 +223,7 @@ pub fn generate(
 		}
 
 		impl #predicate_impl_generics ::linked_data::LinkedDataPredicateObjects<I_, V_> for #ident #ty_generics #predicate_where_clauses {
-			fn visit_objects<S_>(&self, mut visitor: S_) -> Result<S_::Ok, S_::Error>
+			fn accept_objects_visitor<S_>(&self, mut visitor: S_) -> Result<S_::Ok, S_::Error>
 			where
 				S_: ::linked_data::PredicateObjectsVisitor<I_, V_>
 			{
@@ -481,7 +481,7 @@ fn variant_visit_predicate(
 						::linked_data::AnonymousBinding(
 							::linked_data::iref::Iri::new(#iri).unwrap(),
 							#id
-						).visit_objects(visitor)
+						).accept_objects_visitor(visitor)
 					}
 				}
 				VariantShape::Compound(inner_ty) => {
@@ -495,7 +495,7 @@ fn variant_visit_predicate(
 						::linked_data::AnonymousBinding(
 							::linked_data::iref::Iri::new(#iri).unwrap(),
 							&#inner_id #input
-						).visit_objects(visitor)
+						).accept_objects_visitor(visitor)
 					}
 				}
 				VariantShape::Unit => {
@@ -516,7 +516,7 @@ fn variant_visit_predicate(
 				);
 
 				quote! {
-					<#ty as ::linked_data::LinkedDataPredicateObjects<I_, V_>>::visit_objects(#id, visitor)
+					<#ty as ::linked_data::LinkedDataPredicateObjects<I_, V_>>::accept_objects_visitor(#id, visitor)
 				}
 			}
 			VariantShape::Compound(inner_ty) => {
@@ -527,7 +527,7 @@ fn variant_visit_predicate(
 				vocabulary_bounds.add(inner_ty.visit_vocabulary_bounds);
 
 				quote! {
-					#inner_id #input .visit_objects(visitor)
+					#inner_id #input .accept_objects_visitor(visitor)
 				}
 			}
 			VariantShape::Unit => {
@@ -864,7 +864,7 @@ fn variant_subject_type(
 		}
 
 		impl #visit_impl_generics ::linked_data::LinkedDataPredicateObjects<I_, V_> for #subject_id #ty_generics #visit_where_clauses {
-			fn visit_objects<S_>(&self, mut visitor: S_) -> Result<S_::Ok, S_::Error>
+			fn accept_objects_visitor<S_>(&self, mut visitor: S_) -> Result<S_::Ok, S_::Error>
 			where
 				S_: ::linked_data::PredicateObjectsVisitor<I_, V_>
 			{

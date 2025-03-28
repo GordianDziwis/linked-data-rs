@@ -1070,7 +1070,7 @@ impl<I: Interpretation, V: Vocabulary, D: Domain<I, V>> SubjectVisitor<I, V>
 			predicate: term,
 		};
 
-		value.visit_objects(objects_serializer)
+		value.accept_objects_visitor(objects_serializer)
 	}
 
 	fn reverse_predicate<L, T>(&mut self, predicate: &L, subjects: &T) -> Result<(), Self::Error>
@@ -1095,7 +1095,7 @@ impl<I: Interpretation, V: Vocabulary, D: Domain<I, V>> SubjectVisitor<I, V>
 			predicate: term,
 		};
 
-		subjects.visit_objects(subjects_serializer)
+		subjects.accept_objects_visitor(subjects_serializer)
 	}
 
 	fn graph<T>(&mut self, value: &T) -> Result<(), Self::Error>

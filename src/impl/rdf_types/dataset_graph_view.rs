@@ -41,7 +41,7 @@ where
 	I::Resource: Eq + Hash + LinkedDataResource<I, V>,
 	D: PredicateTraversableDataset<Resource = I::Resource> + PatternMatchingDataset,
 {
-	fn visit_objects<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_objects_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: PredicateObjectsVisitor<I, V>,
 	{

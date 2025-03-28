@@ -15,13 +15,13 @@ use crate::{
 
 /// Type representing the objects of an RDF subject's predicate binding.
 pub trait LinkedDataPredicateObjects<I: Interpretation = (), V: Vocabulary = ()> {
-	fn visit_objects<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_objects_visitor<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: PredicateObjectsVisitor<I, V>;
 }
 
 impl<I: Interpretation, V: Vocabulary> LinkedDataPredicateObjects<I, V> for () {
-	fn visit_objects<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_objects_visitor<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: PredicateObjectsVisitor<I, V>,
 	{
@@ -32,29 +32,29 @@ impl<I: Interpretation, V: Vocabulary> LinkedDataPredicateObjects<I, V> for () {
 impl<I: Interpretation, V: Vocabulary, T: ?Sized + LinkedDataPredicateObjects<I, V>>
 	LinkedDataPredicateObjects<I, V> for &T
 {
-	fn visit_objects<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_objects_visitor<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: PredicateObjectsVisitor<I, V>,
 	{
-		T::visit_objects(self, visitor)
+		T::accept_objects_visitor(self, visitor)
 	}
 }
 
 impl<I: Interpretation, V: Vocabulary, T: ?Sized + LinkedDataPredicateObjects<I, V>>
 	LinkedDataPredicateObjects<I, V> for Box<T>
 {
-	fn visit_objects<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_objects_visitor<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: PredicateObjectsVisitor<I, V>,
 	{
-		T::visit_objects(self, visitor)
+		T::accept_objects_visitor(self, visitor)
 	}
 }
 
 impl<I: Interpretation, V: Vocabulary, T: LinkedDataSubject<I, V> + LinkedDataResource<I, V>>
 	LinkedDataPredicateObjects<I, V> for Option<T>
 {
-	fn visit_objects<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_objects_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: PredicateObjectsVisitor<I, V>,
 	{
@@ -69,7 +69,7 @@ impl<I: Interpretation, V: Vocabulary, T: LinkedDataSubject<I, V> + LinkedDataRe
 impl<I: Interpretation, V: Vocabulary, T: LinkedDataSubject<I, V> + LinkedDataResource<I, V>>
 	LinkedDataPredicateObjects<I, V> for [T]
 {
-	fn visit_objects<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_objects_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: PredicateObjectsVisitor<I, V>,
 	{
@@ -84,7 +84,7 @@ impl<I: Interpretation, V: Vocabulary, T: LinkedDataSubject<I, V> + LinkedDataRe
 impl<I: Interpretation, V: Vocabulary, T: LinkedDataSubject<I, V> + LinkedDataResource<I, V>>
 	LinkedDataPredicateObjects<I, V> for Vec<T>
 {
-	fn visit_objects<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_objects_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: PredicateObjectsVisitor<I, V>,
 	{
@@ -100,7 +100,7 @@ impl<I: Interpretation, V: Vocabulary> LinkedDataPredicateObjects<I, V> for Iri
 where
 	V: IriVocabularyMut,
 {
-	fn visit_objects<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_objects_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: PredicateObjectsVisitor<I, V>,
 	{
@@ -113,7 +113,7 @@ impl<I: Interpretation, V: Vocabulary> LinkedDataPredicateObjects<I, V> for IriB
 where
 	V: IriVocabularyMut,
 {
-	fn visit_objects<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_objects_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: PredicateObjectsVisitor<I, V>,
 	{
@@ -126,7 +126,7 @@ impl<I: Interpretation, V: Vocabulary> LinkedDataPredicateObjects<I, V> for Blan
 where
 	V: BlankIdVocabularyMut,
 {
-	fn visit_objects<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_objects_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: PredicateObjectsVisitor<I, V>,
 	{
@@ -139,7 +139,7 @@ impl<I: Interpretation, V: Vocabulary> LinkedDataPredicateObjects<I, V> for Blan
 where
 	V: BlankIdVocabularyMut,
 {
-	fn visit_objects<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_objects_visitor<S>(&self, mut visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: PredicateObjectsVisitor<I, V>,
 	{
@@ -153,13 +153,13 @@ where
 	T: LinkedDataPredicateObjects<I, V>,
 	B: LinkedDataPredicateObjects<I, V>,
 {
-	fn visit_objects<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
+	fn accept_objects_visitor<S>(&self, visitor: S) -> Result<S::Ok, S::Error>
 	where
 		S: PredicateObjectsVisitor<I, V>,
 	{
 		match self {
-			Self::Iri(i) => i.visit_objects(visitor),
-			Self::Blank(b) => b.visit_objects(visitor),
+			Self::Iri(i) => i.accept_objects_visitor(visitor),
+			Self::Blank(b) => b.accept_objects_visitor(visitor),
 		}
 	}
 }

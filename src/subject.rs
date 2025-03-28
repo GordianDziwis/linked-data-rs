@@ -121,7 +121,7 @@ pub trait SubjectVisitor<I: Interpretation, V: Vocabulary> {
 	where
 		T: ?Sized + LinkedDataGraph<I, V>;
 
-	fn include<T>(&mut self, value: &T) -> Result<(), Self::Error>
+	fn visit_include<T>(&mut self, value: &T) -> Result<(), Self::Error>
 	where
 		T: ?Sized + LinkedDataResource<I, V> + LinkedDataSubject<I, V>;
 
@@ -157,11 +157,11 @@ impl<I: Interpretation, V: Vocabulary, S: SubjectVisitor<I, V>> SubjectVisitor<I
 		S::visit_graph(self, value)
 	}
 
-	fn include<T>(&mut self, value: &T) -> Result<(), Self::Error>
+	fn visit_include<T>(&mut self, value: &T) -> Result<(), Self::Error>
 	where
 		T: ?Sized + LinkedDataResource<I, V> + LinkedDataSubject<I, V>,
 	{
-		S::include(self, value)
+		S::visit_include(self, value)
 	}
 
 	fn end(self) -> Result<Self::Ok, Self::Error> {

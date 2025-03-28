@@ -1115,7 +1115,7 @@ impl<I: Interpretation, V: Vocabulary, D: Domain<I, V>> SubjectVisitor<I, V>
 		value.accept_graph_visitor(graph_serializer)
 	}
 
-	fn include<T>(&mut self, value: &T) -> Result<(), Self::Error>
+	fn visit_include<T>(&mut self, value: &T) -> Result<(), Self::Error>
 	where
 		T: ?Sized + LinkedDataResource<I, V> + LinkedDataSubject<I, V>,
 	{

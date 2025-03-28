@@ -31,7 +31,7 @@ impl<V: Vocabulary + IriVocabularyMut, I: Interpretation, T: LinkedDataPredicate
 	where
 		S: SubjectVisitor<I, V>,
 	{
-		serializer.predicate(self.0, self.1)?;
+		serializer.visit_predicate(self.0, self.1)?;
 		serializer.end()
 	}
 }

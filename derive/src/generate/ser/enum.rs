@@ -393,7 +393,7 @@ fn variant_visit_subject(
 					);
 
 					quote! {
-						visitor.predicate(
+						visitor.visit_predicate(
 							::linked_data::iref::Iri::new(#iri).unwrap(),
 							#id
 						)?;
@@ -408,7 +408,7 @@ fn variant_visit_subject(
 					vocabulary_bounds.add(inner_ty.visit_vocabulary_bounds);
 
 					quote! {
-						visitor.predicate(
+						visitor.visit_predicate(
 							::linked_data::iref::Iri::new(#iri).unwrap(),
 							&#inner_id #input
 						)?;

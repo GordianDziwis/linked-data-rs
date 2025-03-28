@@ -145,7 +145,7 @@ impl<'d, 'v, D: PredicateTraversableDataset + PatternMatchingDataset> Subject<'d
 			.dataset
 			.quad_predicates_objects(self.graph, self.subject)
 		{
-			visitor.predicate(
+			visitor.visit_predicate(
 				predicate,
 				&PredicateObjects {
 					dataset: self.dataset,
@@ -175,7 +175,7 @@ where
 				.dataset
 				.quad_predicates_objects(self.graph, self.subject)
 			{
-				visitor.predicate(
+				visitor.visit_predicate(
 					predicate,
 					&PredicateObjects {
 						dataset: self.dataset,

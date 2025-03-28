@@ -85,7 +85,7 @@ fn variant_compound_fields(
 							);
 
 							quote! {
-								visitor.predicate(
+								visitor.visit_predicate(
 									::linked_data::iref::Iri::new(#iri).unwrap(),
 									&Some(::linked_data::AnonymousGraph(#field_ref))
 								)?;
@@ -99,7 +99,7 @@ fn variant_compound_fields(
 							);
 
 							quote! {
-								visitor.predicate(
+								visitor.visit_predicate(
 									::linked_data::iref::Iri::new(#iri).unwrap(),
 									#field_ref
 								)?;

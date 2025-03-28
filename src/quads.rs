@@ -1048,7 +1048,7 @@ impl<I: Interpretation, V: Vocabulary, D: Domain<I, V>> SubjectVisitor<I, V>
 	type Ok = ();
 	type Error = IntoQuadsError;
 
-	fn predicate<L, T>(&mut self, predicate: &L, value: &T) -> Result<(), Self::Error>
+	fn visit_predicate<L, T>(&mut self, predicate: &L, value: &T) -> Result<(), Self::Error>
 	where
 		L: ?Sized + LinkedDataResource<I, V>,
 		T: ?Sized + crate::LinkedDataPredicateObjects<I, V>,

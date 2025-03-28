@@ -36,7 +36,7 @@ pub fn generate(
 			let rdf_type = RDF_TYPE.as_str();
 
 			Ok(quote! {
-				visitor.predicate(
+				visitor.visit_predicate(
 					::linked_data::iref::Iri::new(#rdf_type).unwrap(),
 					::linked_data::iref::Iri::new(#iri).unwrap()
 				)?;

@@ -65,7 +65,7 @@ impl<I: Interpretation, V: Vocabulary, T: LinkedDataResource<I, V>> LinkedData<I
 	where
 		S: crate::Visitor<I, V>,
 	{
-		visitor.default_graph(self)?;
+		visitor.visit_default_graph(self)?;
 		visitor.end()
 	}
 }

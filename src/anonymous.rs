@@ -67,7 +67,7 @@ impl<V: Vocabulary + IriVocabularyMut, I: Interpretation, T: LinkedDataPredicate
 	where
 		S: Visitor<I, V>,
 	{
-		serializer.default_graph(self)?;
+		serializer.visit_default_graph(self)?;
 		serializer.end()
 	}
 }

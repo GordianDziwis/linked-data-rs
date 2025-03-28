@@ -205,7 +205,7 @@ pub trait Visitor<I: Interpretation = (), V: Vocabulary = ()> {
 	type Error;
 
 	/// Visits the default graph of the dataset.
-	fn default_graph<T>(&mut self, value: &T) -> Result<(), Self::Error>
+	fn visit_default_graph<T>(&mut self, value: &T) -> Result<(), Self::Error>
 	where
 		T: ?Sized + LinkedDataGraph<I, V>;
 
@@ -223,11 +223,11 @@ impl<I: Interpretation, V: Vocabulary, S: Visitor<I, V>> Visitor<I, V> for &mut 
 	type Ok = ();
 	type Error = S::Error;
 
-	fn default_graph<T>(&mut self, value: &T) -> Result<(), Self::Error>
+	fn visit_default_graph<T>(&mut self, value: &T) -> Result<(), Self::Error>
 	where
 		T: ?Sized + LinkedDataGraph<I, V>,
 	{
-		S::default_graph(self, value)
+		S::visit_default_graph(self, value)
 	}
 
 	fn named_graph<T>(&mut self, value: &T) -> Result<(), Self::Error>

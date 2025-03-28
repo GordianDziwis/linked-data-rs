@@ -932,7 +932,7 @@ impl<I: Interpretation, V: Vocabulary, D: Domain<I, V>> Visitor<I, V>
 	type Ok = Vec<DomainQuad<I, V, D>>;
 	type Error = IntoQuadsError;
 
-	fn default_graph<T>(&mut self, value: &T) -> Result<(), Self::Error>
+	fn visit_default_graph<T>(&mut self, value: &T) -> Result<(), Self::Error>
 	where
 		T: ?Sized + crate::LinkedDataGraph<I, V>,
 	{

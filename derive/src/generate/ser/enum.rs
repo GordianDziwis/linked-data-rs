@@ -666,7 +666,7 @@ fn variant_serialize(
 				}
 				VariantShape::Unit => {
 					quote! {
-						visitor.default_graph(::linked_data::iref::Iri::new(#iri).unwrap())?;
+						visitor.visit_default_graph(::linked_data::iref::Iri::new(#iri).unwrap())?;
 						visitor.end()
 					}
 				}
@@ -888,7 +888,7 @@ fn variant_subject_type(
 			where
 				S_: ::linked_data::Visitor<I_, V_>
 			{
-				visitor.default_graph(self)?;
+				visitor.visit_default_graph(self)?;
 				visitor.end()
 			}
 		}

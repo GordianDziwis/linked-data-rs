@@ -62,7 +62,7 @@ where
 	where
 		S: GraphVisitor<I, V>,
 	{
-		visitor.subject(self)?;
+		visitor.visit_subject(self)?;
 		visitor.end()
 	}
 }

@@ -583,7 +583,7 @@ fn variant_visit_graph(
 				}
 				VariantShape::Unit => {
 					quote! {
-						visitor.subject(::linked_data::iref::Iri::new(#iri).unwrap())?;
+						visitor.visit_subject(::linked_data::iref::Iri::new(#iri).unwrap())?;
 						visitor.end()
 					}
 				}
@@ -878,7 +878,7 @@ fn variant_subject_type(
 			where
 				S_: ::linked_data::GraphVisitor<I_, V_>
 			{
-				visitor.subject(self)?;
+				visitor.visit_subject(self)?;
 				visitor.end()
 			}
 		}

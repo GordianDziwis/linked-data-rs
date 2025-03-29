@@ -984,7 +984,7 @@ impl<I: Interpretation, V: Vocabulary, D: Domain<I, V>> GraphVisitor<I, V>
 	type Ok = ();
 	type Error = IntoQuadsError;
 
-	fn subject<T>(&mut self, value: &T) -> Result<(), Self::Error>
+	fn visit_subject<T>(&mut self, value: &T) -> Result<(), Self::Error>
 	where
 		T: ?Sized + LinkedDataResource<I, V> + crate::LinkedDataSubject<I, V>,
 	{

@@ -71,7 +71,7 @@ where
 		S: GraphVisitor<I, V>,
 	{
 		for t in self {
-			visitor.subject(t)?;
+			visitor.visit_subject(t)?;
 		}
 		visitor.end()
 	}
@@ -86,7 +86,7 @@ where
 		S: GraphVisitor<I, V>,
 	{
 		for t in self {
-			visitor.subject(t)?;
+			visitor.visit_subject(t)?;
 		}
 		visitor.end()
 	}
@@ -96,7 +96,7 @@ pub trait GraphVisitor<I: Interpretation, V: Vocabulary> {
 	type Ok;
 	type Error;
 
-	fn subject<T>(&mut self, value: &T) -> Result<(), Self::Error>
+	fn visit_subject<T>(&mut self, value: &T) -> Result<(), Self::Error>
 	where
 		T: ?Sized + LinkedDataResource<I, V> + LinkedDataSubject<I, V>;
 
@@ -110,11 +110,11 @@ where
 	type Ok = ();
 	type Error = S::Error;
 
-	fn subject<T>(&mut self, value: &T) -> Result<(), Self::Error>
+	fn visit_subject<T>(&mut self, value: &T) -> Result<(), Self::Error>
 	where
 		T: ?Sized + LinkedDataResource<I, V> + LinkedDataSubject<I, V>,
 	{
-		S::subject(self, value)
+		S::visit_subject(self, value)
 	}
 
 	fn end(self) -> Result<Self::Ok, Self::Error> {

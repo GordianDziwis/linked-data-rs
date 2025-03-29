@@ -110,7 +110,7 @@ pub fn generate(
 			where
 				S_: ::linked_data::GraphVisitor<I_, V_>
 			{
-				visitor.subject(self)?;
+				visitor.visit_subject(self)?;
 				visitor.end()
 			}
 		}

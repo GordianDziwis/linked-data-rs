@@ -44,7 +44,7 @@ where
 		}
 
 		for subject in graph_subjects {
-			visitor.subject(&Subject::new(
+			visitor.visit_subject(&Subject::new(
 				self.dataset,
 				self.graph,
 				subject,
@@ -322,7 +322,7 @@ where
 		}
 
 		for subject in graph_subjects {
-			visitor.subject(&Subject::new(
+			visitor.visit_subject(&Subject::new(
 				self.dataset,
 				Some(self.graph),
 				subject,

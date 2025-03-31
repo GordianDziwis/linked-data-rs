@@ -1,4 +1,4 @@
-use linked_data::{Deserialize, Serialize, Sparql};
+use linked_data::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Default)]
 #[ld(prefix("ex" = "http://example.org/"))]
@@ -36,6 +36,6 @@ struct MoreFoo {
 }
 
 fn main() {
-	println!("{}", Book::get_sparql());
-	println!("{}", Foo::get_sparql());
+	// println!("{}", Book::get_sparql());
+	// println!("{}", Foo::get_sparql());
 }

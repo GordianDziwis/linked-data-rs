@@ -88,8 +88,6 @@ pub use quads::{
 pub use rdf::*;
 pub use reference::*;
 pub use resource::*;
-pub use sparql::to_sparql;
-pub use sparql::Sparql;
 pub use subject::*;
 
 #[derive(Debug, thiserror::Error)]

@@ -90,6 +90,9 @@ pub use reference::*;
 pub use resource::*;
 pub use subject::*;
 
+/// Todo: needed this to be able to use the proc macros inside this crate 
+extern crate self as linked_data;
+
 #[derive(Debug, thiserror::Error)]
 pub enum FromLinkedDataError {
 	/// Resource has no IRI representation.

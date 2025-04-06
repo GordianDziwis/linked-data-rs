@@ -1,3 +1,4 @@
+mod rdf_type_conversions;
 use rdf_types::generator::Blank;
 use rdf_types::interpretation::WithGenerator;
 use rdf_types::RdfDisplay;
@@ -11,31 +12,31 @@ use crate::{to_quads_with, LinkedData};
 
 #[derive(Default)]
 struct ConstructQuery {
-	template: Vec<TriplePattern>,
-	pattern: GraphPattern,
+	construct_template: Vec<TriplePattern>,
+	where_pattern: GraphPattern,
 }
 
-pub trait Sparql {
-	fn to_sparql() -> String {
-		Self::to_sparql_algebra().to_string()
+pub trait SparqlQuery {
+	fn sparql_query() -> String {
+		Self::sparql_algebra().to_string()
 	}
 
-	fn as_sparql(&self) -> String {
+	fn as_sparql_query(&self) -> String {
 		self.as_sparql_algebra().to_string()
 	}
 
-	fn to_sparql_algebra() -> Query;
+	fn sparql_algebra() -> Query;
 
 	fn as_sparql_algebra(&self) -> Query {
-		Self::to_sparql_algebra()
+		Self::sparql_algebra()
 	}
 }
 
-trait ToQuery {
-	fn to_bound_query(binding_variable: Variable) -> ConstructQuery;
+trait ToConstructQuery {
+	fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery;
 
 	fn to_query() -> ConstructQuery {
-		Self::to_bound_query(generate_variable())
+		Self::to_query_with_binding(generate_unique_variable())
 	}
 }
 
@@ -63,44 +64,49 @@ impl ConstructQuery {
 			object: object.into(),
 		}];
 		ConstructQuery {
-			template: patterns.clone(),
-			pattern: GraphPattern::Bgp { patterns },
+			construct_template: patterns.clone(),
+			where_pattern: GraphPattern::Bgp { patterns },
 		}
 	}
 
-	fn new_with<F>(subject: Variable, predicate: NamedNode, to_bound_query: F) -> Self
+	fn new_with<F>(subject: Variable, predicate: NamedNode, to_query_with_binding: F) -> Self
 	where
 		F: FnOnce(Variable) -> Self,
 	{
-		let object = generate_variable();
-		ConstructQuery::new(subject, predicate, object.clone()).join(to_bound_query(object))
+		let object = generate_unique_variable();
+		ConstructQuery::new(subject, predicate, object.clone()).join(to_query_with_binding(object))
 	}
 
-	fn union_with<F>(self, subject: Variable, predicate: NamedNode, to_bound_query: F) -> Self
+	fn union_with<F>(
+		self,
+		subject: Variable,
+		predicate: NamedNode,
+		to_query_with_binding: F,
+	) -> Self
 	where
 		F: FnOnce(Variable) -> Self,
 	{
-		let object = generate_variable();
+		let object = generate_unique_variable();
 		self.union(ConstructQuery::new(subject, predicate, object.clone()))
-			.join(to_bound_query(object))
+			.join(to_query_with_binding(object))
 	}
 
-	fn join_with<F>(self, subject: Variable, predicate: NamedNode, to_bound_query: F) -> Self
+	fn join_with<F>(self, subject: Variable, predicate: NamedNode, to_query_with_binding: F) -> Self
 	where
 		F: FnOnce(Variable) -> Self,
 	{
-		let object = generate_variable();
+		let object = generate_unique_variable();
 		self.join(ConstructQuery::new(subject, predicate, object.clone()))
-			.join(to_bound_query(object))
+			.join(to_query_with_binding(object))
 	}
 }
 
 impl From<ConstructQuery> for Query {
 	fn from(value: ConstructQuery) -> Self {
 		// TODO Remove the optimizer
-		let pattern = (&Optimizer::optimize_graph_pattern((&value.pattern).into())).into();
+		let pattern = (&Optimizer::optimize_graph_pattern((&value.where_pattern).into())).into();
 		Query::Construct {
-			template: value.template,
+			template: value.construct_template,
 			dataset: None,
 			pattern,
 			base_iri: None,
@@ -110,25 +116,25 @@ impl From<ConstructQuery> for Query {
 
 impl Join for ConstructQuery {
 	fn join(mut self, other: Self) -> Self {
-		self.template = self.template.and(other.template);
-		self.pattern = self.pattern.join(other.pattern);
+		self.construct_template = self.construct_template.and(other.construct_template);
+		self.where_pattern = self.where_pattern.join(other.where_pattern);
 		self
 	}
 }
 
 impl Union for ConstructQuery {
 	fn union(mut self, other: Self) -> Self {
-		self.template = self.template.and(other.template);
-		self.pattern = self.pattern.union(other.pattern);
+		self.construct_template = self.construct_template.and(other.construct_template);
+		self.where_pattern = self.where_pattern.union(other.where_pattern);
 		self
 	}
 }
 
-impl<T> Sparql for T
+impl<T> SparqlQuery for T
 where
-	T: ToQuery,
+	T: ToConstructQuery,
 {
-	fn to_sparql_algebra() -> Query {
+	fn sparql_algebra() -> Query {
 		Self::to_query().into()
 	}
 }
@@ -158,13 +164,19 @@ impl Union for GraphPattern {
 	}
 }
 
-impl ToQuery for String {
-	fn to_bound_query(_: Variable) -> ConstructQuery {
+impl ToConstructQuery for Variable {
+	fn to_query_with_binding(_: Variable) -> ConstructQuery {
 		ConstructQuery::default()
 	}
 }
 
-fn generate_variable() -> Variable {
+impl ToConstructQuery for String {
+	fn to_query_with_binding(_: Variable) -> ConstructQuery {
+		ConstructQuery::default()
+	}
+}
+
+fn generate_unique_variable() -> Variable {
 	let uuid = format!("{}", Uuid::new_v4().simple());
 	// TODO Avoid collisons
 	let variable = uuid[..5].to_string();
@@ -184,17 +196,24 @@ pub fn to_nquads(value: &impl LinkedData<WithGenerator<Blank>>) -> String {
 
 #[cfg(test)]
 mod tests {
-	use crate::sparql::{to_nquads, ConstructQuery, Sparql, ToQuery};
-	use crate::LinkedData;
+	use std::fmt;
+
+	use crate::sparql::rdf_type_conversions::IntoRdfTypes;
+	use crate::sparql::{
+		generate_unique_variable, to_nquads, ConstructQuery, Join, SparqlQuery, ToConstructQuery,
+	};
+	use crate::{LinkedData, LinkedDataDeserializeSubject};
 	use linked_data_derive::{Deserialize, Serialize};
-	use oxigraph::io::RdfFormat;
+	use oxigraph::sparql::QueryResults;
 	use oxigraph::store::Store;
 	use oxttl::NQuadsParser;
+	use rdf_types::dataset::IndexedBTreeDataset;
 	use rdf_types::generator::Blank;
 	use rdf_types::interpretation::WithGenerator;
+	use rdf_types::Generator;
 	use spargebra::term::{NamedNode, Variable};
 
-	#[derive(Serialize, Deserialize)]
+	#[derive(Serialize, Deserialize, Debug, PartialEq)]
 	#[ld(prefix("ex" = "http://ex/"))]
 	enum SimpleEnum {
 		#[ld("ex:left")]
@@ -203,7 +222,7 @@ mod tests {
 		Right(String),
 	}
 
-	#[derive(Serialize, Deserialize)]
+	#[derive(Serialize, Deserialize, Debug, PartialEq)]
 	#[ld(prefix("ex" = "http://ex/"))]
 	enum Enum {
 		#[ld("ex:left")]
@@ -212,7 +231,7 @@ mod tests {
 		Right(SimpleStruct),
 	}
 
-	#[derive(Serialize, Deserialize)]
+	#[derive(Serialize, Deserialize, Debug, PartialEq)]
 	#[ld(prefix("ex" = "http://ex/"))]
 	struct SimpleStruct {
 		#[ld("ex:field_0")]
@@ -221,55 +240,97 @@ mod tests {
 		field_1: String,
 	}
 
+	#[derive(Serialize, Deserialize, Debug, PartialEq)]
+	#[ld(prefix("ex" = "http://ex/"))]
+	enum SimplePropertyCompoundEnum {
+		#[ld("ex:left")]
+		Left(#[ld("ex:value")] String),
+	}
+
 	/// This will be generated
-	impl ToQuery for SimpleEnum {
-		fn to_bound_query(binding_variable: Variable) -> ConstructQuery {
+	impl ToConstructQuery for SimpleEnum {
+		fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
 			ConstructQuery::new_with(
 				binding_variable.clone(),
 				NamedNode::new_unchecked("http://ex/left"),
-				String::to_bound_query,
+				String::to_query_with_binding,
 			)
 			.union_with(
 				binding_variable.clone(),
 				NamedNode::new_unchecked("http://ex/right"),
-				String::to_bound_query,
+				String::to_query_with_binding,
 			)
 		}
 	}
 
-	impl ToQuery for Enum {
-		fn to_bound_query(binding_variable: Variable) -> ConstructQuery {
+	fn with_predicate<F>(
+		predicate: NamedNode,
+		to_query_with_binding: F,
+	) -> impl FnOnce(Variable) -> ConstructQuery
+	where
+		F: FnOnce(Variable) -> ConstructQuery,
+	{
+		|subject| {
+			let object = generate_unique_variable();
+			ConstructQuery::new(subject, predicate, object.clone())
+				.join(to_query_with_binding(object))
+		}
+	}
+
+	impl ToConstructQuery for SimplePropertyCompoundEnum {
+		fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
 			ConstructQuery::new_with(
 				binding_variable.clone(),
 				NamedNode::new_unchecked("http://ex/left"),
-				String::to_bound_query,
+				with_predicate(
+					NamedNode::new_unchecked("http://ex/value"),
+					String::to_query_with_binding,
+				),
+			)
+		}
+	}
+
+	impl ToConstructQuery for Enum {
+		fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
+			ConstructQuery::new_with(
+				binding_variable.clone(),
+				NamedNode::new_unchecked("http://ex/left"),
+				String::to_query_with_binding,
 			)
 			.union_with(
 				binding_variable.clone(),
 				NamedNode::new_unchecked("http://ex/right"),
-				SimpleStruct::to_bound_query,
+				SimpleStruct::to_query_with_binding,
 			)
 		}
 	}
 
-	impl ToQuery for SimpleStruct {
-		fn to_bound_query(binding_variable: Variable) -> ConstructQuery {
+	impl ToConstructQuery for SimpleStruct {
+		fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
 			ConstructQuery::new_with(
 				binding_variable.clone(),
 				NamedNode::new_unchecked("http://ex/field_0"),
-				String::to_bound_query,
+				String::to_query_with_binding,
 			)
 			.join_with(
 				binding_variable.clone(),
 				NamedNode::new_unchecked("http://ex/field_1"),
-				String::to_bound_query,
+				String::to_query_with_binding,
 			)
 		}
 	}
 
-	fn test_sparql<T: LinkedData<WithGenerator<Blank>> + Sparql>(input: &T) {
-		let expected_nquads = to_nquads(input).into_bytes();
+	fn test_sparql<T>(expected: &T)
+	where
+		T: LinkedData<WithGenerator<Blank>>
+			+ SparqlQuery
+			+ LinkedDataDeserializeSubject
+			+ PartialEq
+			+ fmt::Debug,
+	{
+		let expected_nquads = to_nquads(expected).into_bytes();
 
+		println!();
 		println!();
 		println!("Expected NQuads:");
 		println!("{}", String::from_utf8(expected_nquads.clone()).unwrap());
@@ -280,7 +341,7 @@ mod tests {
 			store.insert(&quad).unwrap();
 		});
 
-		let query = input.as_sparql_algebra();
+		let query = expected.as_sparql_algebra();
 
 		println!("Generated Query:");
 		println!("{}", query);
@@ -288,17 +349,30 @@ mod tests {
 		println!("Generated SSE:");
 		println!("{}", query.to_sse());
 
-		let result = store.query(query).unwrap();
-		let actual_nquads = result.write_graph(Vec::new(), RdfFormat::NQuads).unwrap();
-
+		let mut expected_dataset = IndexedBTreeDataset::new();
 		println!();
 		println!("Actual NQuads:");
-		println!("{}", String::from_utf8(actual_nquads.clone()).unwrap());
+		if let QueryResults::Graph(triples) = store.query(query).unwrap() {
+			triples.filter_map(Result::ok).for_each(|triple| {
+				let quad = triple.into_rdf_types();
+				println!("{}", quad);
+				expected_dataset.insert(quad);
+			})
+		}
 
-		// assert_eq!(expected_nquads, actual_nquads);
+		let actual = T::deserialize_subject(
+			&(),
+			&(),
+			&expected_dataset,
+			None,
+			&Blank::new().next(&mut ()).into_term(),
+		)
+		.unwrap();
+
+		assert_eq!(expected, &actual);
 	}
 
-	// #[test]
+	#[test]
 	fn test_simple_enum() {
 		let input = SimpleEnum::Left("left".to_owned());
 		test_sparql(&input);
@@ -314,12 +388,18 @@ mod tests {
 		test_sparql(&enum_);
 	}
 
-	// #[test]
+	#[test]
 	fn test_simple_struct() {
 		let input = SimpleStruct {
 			field_0: "zero".to_owned(),
 			field_1: "one".to_owned(),
 		};
+		test_sparql(&input);
+	}
+
+	#[test]
+	fn test_simple_property_compound_enum() {
+		let input = SimplePropertyCompoundEnum::Left("value".to_owned());
 		test_sparql(&input);
 	}
 }

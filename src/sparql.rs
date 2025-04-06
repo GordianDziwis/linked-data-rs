@@ -2,7 +2,7 @@ mod rdf_type_conversions;
 use rdf_types::generator::Blank;
 use rdf_types::interpretation::WithGenerator;
 use rdf_types::RdfDisplay;
-use spargebra::algebra::GraphPattern;
+use spargebra::algebra::{Expression, GraphPattern};
 use spargebra::term::{NamedNode, NamedNodePattern, TermPattern, TriplePattern, Variable};
 use spargebra::Query;
 use sparopt::Optimizer;
@@ -111,6 +111,20 @@ impl ConstructQuery {
 
 	fn join_with(self, subject: Variable, predicate: NamedNode, object: NamedNode) -> Self {
 		self.join(ConstructQuery::new(subject, predicate, object))
+	}
+
+	fn filter_variable(self, variable: Variable, id: NamedNode) -> Self {
+		let expr = Expression::Equal(
+			Box::new(Expression::Variable(variable)),
+			Box::new(Expression::NamedNode(id)),
+		);
+		Self {
+			construct_template: self.construct_template,
+			where_pattern: GraphPattern::Filter {
+				expr,
+				inner: Box::new(self.where_pattern),
+			},
+		}
 	}
 }
 
@@ -226,10 +240,10 @@ mod tests {
 
 	use crate::sparql::rdf_type_conversions::IntoRdfTypes;
 	use crate::sparql::{
-		generate_unique_variable, to_nquads, with_predicate, ConstructQuery, Join, SparqlQuery,
-		ToConstructQuery,
+		to_nquads, with_predicate, ConstructQuery, Join, SparqlQuery, ToConstructQuery,
 	};
 	use crate::{LinkedData, LinkedDataDeserializeSubject};
+	use iref::IriBuf;
 	use linked_data_derive::{Deserialize, Serialize};
 	use oxigraph::sparql::QueryResults;
 	use oxigraph::store::Store;
@@ -240,6 +254,16 @@ mod tests {
 	use rdf_types::Generator;
 	use spargebra::term::{NamedNode, Variable};
 
+	#[derive(Serialize, Deserialize, Debug, PartialEq)]
+	#[ld(prefix("ex" = "http://ex/"))]
+	struct Id {
+		#[ld(id)]
+		id: IriBuf,
+
+		#[ld("ex:field")]
+		value: String,
+	}
+
 	#[derive(Serialize, Deserialize, Debug, Default, PartialEq)]
 	#[ld(type = "http://ex/Type")]
 	#[ld(prefix("ex" = "http://ex/"))]
@@ -249,7 +273,6 @@ mod tests {
 	}
 
 	#[derive(Serialize, Deserialize, Debug, PartialEq)]
-	#[ld(type = "http://ex/Type")]
 	#[ld(prefix("ex" = "http://ex/"))]
 	enum SimpleEnumType {
 		#[ld("ex:left")]
@@ -299,7 +322,44 @@ mod tests {
 		Left(#[ld("ex:value")] String),
 	}
 
+	#[derive(Serialize, Deserialize, Debug, PartialEq)]
+	#[ld(prefix("ex" = "http://ex/"))]
+	struct CrazyStruct {
+		#[ld("ex:struct_id")]
+		id: Id,
+		#[ld("ex:struct_type")]
+		type_field: Type,
+		#[ld("ex:struct_flattened")]
+		flattened: FlattendStruct,
+	}
+
+	#[derive(Serialize, Deserialize, Debug, PartialEq)]
+	#[ld(prefix("ex" = "http://ex/"))]
+	enum Crazy {
+		#[ld("ex:enum_id")]
+		Id(#[ld("ex:id")] Id),
+		#[ld("ex:enum_typed")]
+		Type(#[ld("ex:typed")] Type),
+		#[ld("ex:enum_flat")]
+		Flattend(#[ld("ex:flat")] FlattendStruct),
+	}
+
 	/// This will be generated
+	impl ToConstructQuery for Id {
+		fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
+			ConstructQuery::default()
+				.join_with_binding(
+					binding_variable.clone(),
+					NamedNode::new_unchecked("http://ex/field"),
+					String::to_query_with_binding,
+				)
+				.filter_variable(
+					binding_variable.clone(),
+					NamedNode::new_unchecked("http://example.org/myBar"),
+				)
+		}
+	}
+
 	impl ToConstructQuery for Type {
 		fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
 			ConstructQuery::new_with_binding(
@@ -400,7 +460,7 @@ mod tests {
 		}
 	}
 
-	fn test_sparql<T>(expected: &T)
+	fn test_sparql<T>(expected: &T, id: Option<IriBuf>)
 	where
 		T: LinkedData<WithGenerator<Blank>>
 			+ SparqlQuery
@@ -440,14 +500,14 @@ mod tests {
 			})
 		}
 
-		let actual = T::deserialize_subject(
-			&(),
-			&(),
-			&expected_dataset,
-			None,
-			&Blank::new().next(&mut ()).into_term(),
-		)
-		.unwrap();
+		let subject = if let Some(iri) = id {
+			<rdf_types::Term as rdf_types::FromIri>::from_iri(iri)
+		} else {
+			// Use a blank node as default
+			Blank::new().next(&mut ()).into_term()
+		};
+
+		let actual = T::deserialize_subject(&(), &(), &expected_dataset, None, &subject).unwrap();
 
 		assert_eq!(expected, &actual);
 	}
@@ -455,7 +515,7 @@ mod tests {
 	#[test]
 	fn test_simple_enum() {
 		let input = SimpleEnum::Left("left".to_owned());
-		test_sparql(&input);
+		test_sparql(&input, None);
 	}
 
 	#[test]
@@ -465,7 +525,7 @@ mod tests {
 			field_1: "one".to_owned(),
 		};
 		let enum_ = Enum::Right(simple_struct);
-		test_sparql(&enum_);
+		test_sparql(&enum_, None);
 	}
 
 	#[test]
@@ -474,7 +534,7 @@ mod tests {
 			field_0: "zero".to_owned(),
 			field_1: "one".to_owned(),
 		};
-		test_sparql(&input);
+		test_sparql(&input, None);
 	}
 
 	#[test]
@@ -487,25 +547,35 @@ mod tests {
 			child,
 			field: "parent".to_owned(),
 		};
-		test_sparql(&input);
+		test_sparql(&input, None);
 	}
 
 	#[test]
 	fn test_simple_property_compound_enum() {
 		let input = SimplePropertyCompoundEnum::Left("value".to_owned());
-		test_sparql(&input);
+		test_sparql(&input, None);
+	}
+
+	#[test]
+	fn test_id() {
+		let id = IriBuf::new("http://example.org/myBar".to_string()).unwrap();
+		let input = Id {
+			id: id.clone(),
+			value: "value".to_owned(),
+		};
+		test_sparql(&input, Some(id));
 	}
 
 	#[test]
 	fn test_type() {
 		let input = Type::default();
-		test_sparql(&input);
+		test_sparql(&input, None);
 	}
 
 	#[test]
 	fn test_simple_enum_type() {
 		// TODO linked-data-rs does not add the type to enums
 		let input = SimpleEnumType::Left("value".to_owned());
-		test_sparql(&input);
+		test_sparql(&input, None);
 	}
 }

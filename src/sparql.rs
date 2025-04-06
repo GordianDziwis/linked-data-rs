@@ -225,7 +225,10 @@ mod tests {
 	use std::fmt;
 
 	use crate::sparql::rdf_type_conversions::IntoRdfTypes;
-	use crate::sparql::{to_nquads, with_predicate, ConstructQuery, SparqlQuery, ToConstructQuery};
+	use crate::sparql::{
+		generate_unique_variable, to_nquads, with_predicate, ConstructQuery, Join, SparqlQuery,
+		ToConstructQuery,
+	};
 	use crate::{LinkedData, LinkedDataDeserializeSubject};
 	use linked_data_derive::{Deserialize, Serialize};
 	use oxigraph::sparql::QueryResults;
@@ -260,8 +263,6 @@ mod tests {
 	enum SimpleEnum {
 		#[ld("ex:left")]
 		Left(String),
-		#[ld("ex:right")]
-		Right(String),
 	}
 
 	#[derive(Serialize, Deserialize, Debug, PartialEq)]
@@ -270,16 +271,25 @@ mod tests {
 		#[ld("ex:left")]
 		Left(String),
 		#[ld("ex:right")]
-		Right(SimpleStruct),
+		Right(Struct),
 	}
 
 	#[derive(Serialize, Deserialize, Debug, PartialEq)]
 	#[ld(prefix("ex" = "http://ex/"))]
-	struct SimpleStruct {
+	struct Struct {
 		#[ld("ex:field_0")]
 		field_0: String,
 		#[ld("ex:field_1")]
 		field_1: String,
+	}
+
+	#[derive(Serialize, Deserialize, Debug, PartialEq)]
+	#[ld(prefix("ex" = "http://ex/"))]
+	struct FlattendStruct {
+		#[ld("ex:field")]
+		field: String,
+		#[ld(flatten)]
+		child: Struct,
 	}
 
 	#[derive(Serialize, Deserialize, Debug, PartialEq)]
@@ -358,12 +368,12 @@ mod tests {
 			.union_with_binding(
 				binding_variable.clone(),
 				NamedNode::new_unchecked("http://ex/right"),
-				SimpleStruct::to_query_with_binding,
+				Struct::to_query_with_binding,
 			)
 		}
 	}
 
-	impl ToConstructQuery for SimpleStruct {
+	impl ToConstructQuery for Struct {
 		fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
 			ConstructQuery::new_with_binding(
 				binding_variable.clone(),
@@ -375,6 +385,18 @@ mod tests {
 				NamedNode::new_unchecked("http://ex/field_1"),
 				String::to_query_with_binding,
 			)
+		}
+	}
+
+	impl ToConstructQuery for FlattendStruct {
+		fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
+			ConstructQuery::default()
+				.join_with_binding(
+					binding_variable.clone(),
+					NamedNode::new_unchecked("http://ex/field"),
+					String::to_query_with_binding,
+				)
+				.join(Struct::to_query_with_binding(binding_variable.clone()))
 		}
 	}
 
@@ -438,7 +460,7 @@ mod tests {
 
 	#[test]
 	fn test_enum() {
-		let simple_struct = SimpleStruct {
+		let simple_struct = Struct {
 			field_0: "zero".to_owned(),
 			field_1: "one".to_owned(),
 		};
@@ -448,9 +470,22 @@ mod tests {
 
 	#[test]
 	fn test_simple_struct() {
-		let input = SimpleStruct {
+		let input = Struct {
 			field_0: "zero".to_owned(),
 			field_1: "one".to_owned(),
+		};
+		test_sparql(&input);
+	}
+
+	#[test]
+	fn test_flattend_struct() {
+		let child = Struct {
+			field_0: "flattened zero".to_owned(),
+			field_1: "flattened one".to_owned(),
+		};
+		let input = FlattendStruct {
+			child,
+			field: "parent".to_owned(),
 		};
 		test_sparql(&input);
 	}

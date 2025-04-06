@@ -69,7 +69,11 @@ impl ConstructQuery {
 		}
 	}
 
-	fn new_with<F>(subject: Variable, predicate: NamedNode, to_query_with_binding: F) -> Self
+	fn new_with_binding<F>(
+		subject: Variable,
+		predicate: NamedNode,
+		to_query_with_binding: F,
+	) -> Self
 	where
 		F: FnOnce(Variable) -> Self,
 	{
@@ -77,7 +81,7 @@ impl ConstructQuery {
 		ConstructQuery::new(subject, predicate, object.clone()).join(to_query_with_binding(object))
 	}
 
-	fn union_with<F>(
+	fn union_with_binding<F>(
 		self,
 		subject: Variable,
 		predicate: NamedNode,
@@ -91,13 +95,22 @@ impl ConstructQuery {
 			.join(to_query_with_binding(object))
 	}
 
-	fn join_with<F>(self, subject: Variable, predicate: NamedNode, to_query_with_binding: F) -> Self
+	fn join_with_binding<F>(
+		self,
+		subject: Variable,
+		predicate: NamedNode,
+		to_query_with_binding: F,
+	) -> Self
 	where
 		F: FnOnce(Variable) -> Self,
 	{
 		let object = generate_unique_variable();
 		self.join(ConstructQuery::new(subject, predicate, object.clone()))
 			.join(to_query_with_binding(object))
+	}
+
+	fn join_with(self, subject: Variable, predicate: NamedNode, object: NamedNode) -> Self {
+		self.join(ConstructQuery::new(subject, predicate, object))
 	}
 }
 
@@ -176,6 +189,19 @@ impl ToConstructQuery for String {
 	}
 }
 
+fn with_predicate<F>(
+	predicate: NamedNode,
+	to_query_with_binding: F,
+) -> impl FnOnce(Variable) -> ConstructQuery
+where
+	F: FnOnce(Variable) -> ConstructQuery,
+{
+	|subject| {
+		let object = generate_unique_variable();
+		ConstructQuery::new(subject, predicate, object.clone()).join(to_query_with_binding(object))
+	}
+}
+
 fn generate_unique_variable() -> Variable {
 	let uuid = format!("{}", Uuid::new_v4().simple());
 	// TODO Avoid collisons
@@ -199,9 +225,7 @@ mod tests {
 	use std::fmt;
 
 	use crate::sparql::rdf_type_conversions::IntoRdfTypes;
-	use crate::sparql::{
-		generate_unique_variable, to_nquads, ConstructQuery, Join, SparqlQuery, ToConstructQuery,
-	};
+	use crate::sparql::{to_nquads, with_predicate, ConstructQuery, SparqlQuery, ToConstructQuery};
 	use crate::{LinkedData, LinkedDataDeserializeSubject};
 	use linked_data_derive::{Deserialize, Serialize};
 	use oxigraph::sparql::QueryResults;
@@ -212,6 +236,24 @@ mod tests {
 	use rdf_types::interpretation::WithGenerator;
 	use rdf_types::Generator;
 	use spargebra::term::{NamedNode, Variable};
+
+	#[derive(Serialize, Deserialize, Debug, Default, PartialEq)]
+	#[ld(type = "http://ex/Type")]
+	#[ld(prefix("ex" = "http://ex/"))]
+	struct Type {
+		#[ld("ex:field")]
+		field: String,
+	}
+
+	#[derive(Serialize, Deserialize, Debug, PartialEq)]
+	#[ld(type = "http://ex/Type")]
+	#[ld(prefix("ex" = "http://ex/"))]
+	enum SimpleEnumType {
+		#[ld("ex:left")]
+		Left(String),
+		#[ld("ex:right")]
+		Right(String),
+	}
 
 	#[derive(Serialize, Deserialize, Debug, PartialEq)]
 	#[ld(prefix("ex" = "http://ex/"))]
@@ -248,14 +290,29 @@ mod tests {
 	}
 
 	/// This will be generated
-	impl ToConstructQuery for SimpleEnum {
+	impl ToConstructQuery for Type {
 		fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
-			ConstructQuery::new_with(
+			ConstructQuery::new_with_binding(
+				binding_variable.clone(),
+				NamedNode::new_unchecked("http://ex/field"),
+				String::to_query_with_binding,
+			)
+			.join_with(
+				binding_variable.clone(),
+				NamedNode::new_unchecked("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
+				NamedNode::new_unchecked("http://ex/Type"),
+			)
+		}
+	}
+
+	impl ToConstructQuery for SimpleEnumType {
+		fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
+			ConstructQuery::new_with_binding(
 				binding_variable.clone(),
 				NamedNode::new_unchecked("http://ex/left"),
 				String::to_query_with_binding,
 			)
-			.union_with(
+			.union_with_binding(
 				binding_variable.clone(),
 				NamedNode::new_unchecked("http://ex/right"),
 				String::to_query_with_binding,
@@ -263,23 +320,24 @@ mod tests {
 		}
 	}
 
-	fn with_predicate<F>(
-		predicate: NamedNode,
-		to_query_with_binding: F,
-	) -> impl FnOnce(Variable) -> ConstructQuery
-	where
-		F: FnOnce(Variable) -> ConstructQuery,
-	{
-		|subject| {
-			let object = generate_unique_variable();
-			ConstructQuery::new(subject, predicate, object.clone())
-				.join(to_query_with_binding(object))
+	impl ToConstructQuery for SimpleEnum {
+		fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
+			ConstructQuery::new_with_binding(
+				binding_variable.clone(),
+				NamedNode::new_unchecked("http://ex/left"),
+				String::to_query_with_binding,
+			)
+			.union_with_binding(
+				binding_variable.clone(),
+				NamedNode::new_unchecked("http://ex/right"),
+				String::to_query_with_binding,
+			)
 		}
 	}
 
 	impl ToConstructQuery for SimplePropertyCompoundEnum {
 		fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
-			ConstructQuery::new_with(
+			ConstructQuery::new_with_binding(
 				binding_variable.clone(),
 				NamedNode::new_unchecked("http://ex/left"),
 				with_predicate(
@@ -292,12 +350,12 @@ mod tests {
 
 	impl ToConstructQuery for Enum {
 		fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
-			ConstructQuery::new_with(
+			ConstructQuery::new_with_binding(
 				binding_variable.clone(),
 				NamedNode::new_unchecked("http://ex/left"),
 				String::to_query_with_binding,
 			)
-			.union_with(
+			.union_with_binding(
 				binding_variable.clone(),
 				NamedNode::new_unchecked("http://ex/right"),
 				SimpleStruct::to_query_with_binding,
@@ -307,12 +365,12 @@ mod tests {
 
 	impl ToConstructQuery for SimpleStruct {
 		fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
-			ConstructQuery::new_with(
+			ConstructQuery::new_with_binding(
 				binding_variable.clone(),
 				NamedNode::new_unchecked("http://ex/field_0"),
 				String::to_query_with_binding,
 			)
-			.join_with(
+			.join_with_binding(
 				binding_variable.clone(),
 				NamedNode::new_unchecked("http://ex/field_1"),
 				String::to_query_with_binding,
@@ -400,6 +458,19 @@ mod tests {
 	#[test]
 	fn test_simple_property_compound_enum() {
 		let input = SimplePropertyCompoundEnum::Left("value".to_owned());
+		test_sparql(&input);
+	}
+
+	#[test]
+	fn test_type() {
+		let input = Type::default();
+		test_sparql(&input);
+	}
+
+	#[test]
+	fn test_simple_enum_type() {
+		// TODO linked-data-rs does not add the type to enums
+		let input = SimpleEnumType::Left("value".to_owned());
 		test_sparql(&input);
 	}
 }

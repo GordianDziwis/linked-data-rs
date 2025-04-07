@@ -256,7 +256,17 @@ mod tests {
 
 	#[derive(Serialize, Deserialize, Debug, PartialEq)]
 	#[ld(prefix("ex" = "http://ex/"))]
-	struct Id {
+	struct Struct {
+		#[ld("ex:field_0")]
+		field_0: String,
+
+		#[ld("ex:field_1")]
+		field_1: String,
+	}
+
+	#[derive(Serialize, Deserialize, Debug, PartialEq)]
+	#[ld(prefix("ex" = "http://ex/"))]
+	struct StructId {
 		#[ld(id)]
 		id: IriBuf,
 
@@ -267,25 +277,23 @@ mod tests {
 	#[derive(Serialize, Deserialize, Debug, Default, PartialEq)]
 	#[ld(type = "http://ex/Type")]
 	#[ld(prefix("ex" = "http://ex/"))]
-	struct Type {
+	struct StuctType {
 		#[ld("ex:field")]
 		field: String,
 	}
 
 	#[derive(Serialize, Deserialize, Debug, PartialEq)]
 	#[ld(prefix("ex" = "http://ex/"))]
-	enum SimpleEnumType {
-		#[ld("ex:left")]
-		Left(String),
-		#[ld("ex:right")]
-		Right(String),
+	struct StructFlatten {
+		#[ld(flatten)]
+		child: Struct,
 	}
 
 	#[derive(Serialize, Deserialize, Debug, PartialEq)]
 	#[ld(prefix("ex" = "http://ex/"))]
-	enum SimpleEnum {
-		#[ld("ex:left")]
-		Left(String),
+	struct StructVec {
+		#[ld("ex:vec")]
+		more: Vec<Struct>,
 	}
 
 	#[derive(Serialize, Deserialize, Debug, PartialEq)]
@@ -298,54 +306,63 @@ mod tests {
 	}
 
 	#[derive(Serialize, Deserialize, Debug, PartialEq)]
+	#[ld(type = "http://ex/Type")]
 	#[ld(prefix("ex" = "http://ex/"))]
-	struct Struct {
-		#[ld("ex:field_0")]
-		field_0: String,
-		#[ld("ex:field_1")]
-		field_1: String,
+	enum EnumType {
+		#[ld("ex:left")]
+		Left(String),
 	}
 
 	#[derive(Serialize, Deserialize, Debug, PartialEq)]
 	#[ld(prefix("ex" = "http://ex/"))]
-	struct FlattendStruct {
-		#[ld("ex:field")]
-		field: String,
-		#[ld(flatten)]
-		child: Struct,
-	}
-
-	#[derive(Serialize, Deserialize, Debug, PartialEq)]
-	#[ld(prefix("ex" = "http://ex/"))]
-	enum SimplePropertyCompoundEnum {
+	enum EnumBlankNode {
 		#[ld("ex:left")]
 		Left(#[ld("ex:value")] String),
 	}
 
 	#[derive(Serialize, Deserialize, Debug, PartialEq)]
+	#[ld(type = "http://ex/Type")]
 	#[ld(prefix("ex" = "http://ex/"))]
 	struct CrazyStruct {
+		#[ld(id)]
+		id: IriBuf,
 		#[ld("ex:struct_id")]
-		id: Id,
+		id_field: StructId,
 		#[ld("ex:struct_type")]
-		type_field: Type,
-		#[ld("ex:struct_flattened")]
-		flattened: FlattendStruct,
+		type_field: StuctType,
+		#[ld("ex:struct_flatten")]
+		flatten_field: StructFlatten,
 	}
 
 	#[derive(Serialize, Deserialize, Debug, PartialEq)]
 	#[ld(prefix("ex" = "http://ex/"))]
 	enum Crazy {
 		#[ld("ex:enum_id")]
-		Id(#[ld("ex:id")] Id),
-		#[ld("ex:enum_typed")]
-		Type(#[ld("ex:typed")] Type),
-		#[ld("ex:enum_flat")]
-		Flattend(#[ld("ex:flat")] FlattendStruct),
+		Id(#[ld("ex:id")] StructId),
+		#[ld("ex:enum_type")]
+		Type(#[ld("ex:type")] StuctType),
+		#[ld("ex:enum_flatten")]
+		Flatten(#[ld("ex:flatten")] StructFlatten),
 	}
 
 	/// This will be generated
-	impl ToConstructQuery for Id {
+	impl ToConstructQuery for Struct {
+		fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
+			ConstructQuery::default()
+				.join_with_binding(
+					binding_variable.clone(),
+					NamedNode::new_unchecked("http://ex/field_0"),
+					String::to_query_with_binding,
+				)
+				.join_with_binding(
+					binding_variable.clone(),
+					NamedNode::new_unchecked("http://ex/field_1"),
+					String::to_query_with_binding,
+				)
+		}
+	}
+
+	impl ToConstructQuery for StructId {
 		fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
 			ConstructQuery::default()
 				.join_with_binding(
@@ -360,61 +377,25 @@ mod tests {
 		}
 	}
 
-	impl ToConstructQuery for Type {
+	impl ToConstructQuery for StuctType {
 		fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
-			ConstructQuery::new_with_binding(
-				binding_variable.clone(),
-				NamedNode::new_unchecked("http://ex/field"),
-				String::to_query_with_binding,
-			)
-			.join_with(
-				binding_variable.clone(),
-				NamedNode::new_unchecked("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
-				NamedNode::new_unchecked("http://ex/Type"),
-			)
-		}
-	}
-
-	impl ToConstructQuery for SimpleEnumType {
-		fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
-			ConstructQuery::new_with_binding(
-				binding_variable.clone(),
-				NamedNode::new_unchecked("http://ex/left"),
-				String::to_query_with_binding,
-			)
-			.union_with_binding(
-				binding_variable.clone(),
-				NamedNode::new_unchecked("http://ex/right"),
-				String::to_query_with_binding,
-			)
-		}
-	}
-
-	impl ToConstructQuery for SimpleEnum {
-		fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
-			ConstructQuery::new_with_binding(
-				binding_variable.clone(),
-				NamedNode::new_unchecked("http://ex/left"),
-				String::to_query_with_binding,
-			)
-			.union_with_binding(
-				binding_variable.clone(),
-				NamedNode::new_unchecked("http://ex/right"),
-				String::to_query_with_binding,
-			)
-		}
-	}
-
-	impl ToConstructQuery for SimplePropertyCompoundEnum {
-		fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
-			ConstructQuery::new_with_binding(
-				binding_variable.clone(),
-				NamedNode::new_unchecked("http://ex/left"),
-				with_predicate(
-					NamedNode::new_unchecked("http://ex/value"),
+			ConstructQuery::default()
+				.join_with_binding(
+					binding_variable.clone(),
+					NamedNode::new_unchecked("http://ex/field"),
 					String::to_query_with_binding,
-				),
-			)
+				)
+				.join_with(
+					binding_variable.clone(),
+					NamedNode::new_unchecked("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
+					NamedNode::new_unchecked("http://ex/Type"),
+				)
+		}
+	}
+
+	impl ToConstructQuery for StructFlatten {
+		fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
+			ConstructQuery::default().join(Struct::to_query_with_binding(binding_variable.clone()))
 		}
 	}
 
@@ -433,30 +414,31 @@ mod tests {
 		}
 	}
 
-	impl ToConstructQuery for Struct {
+	impl ToConstructQuery for EnumType {
 		fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
 			ConstructQuery::new_with_binding(
 				binding_variable.clone(),
-				NamedNode::new_unchecked("http://ex/field_0"),
+				NamedNode::new_unchecked("http://ex/left"),
 				String::to_query_with_binding,
 			)
-			.join_with_binding(
+			.join_with(
 				binding_variable.clone(),
-				NamedNode::new_unchecked("http://ex/field_1"),
-				String::to_query_with_binding,
+				NamedNode::new_unchecked("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
+				NamedNode::new_unchecked("http://ex/Type"),
 			)
 		}
 	}
 
-	impl ToConstructQuery for FlattendStruct {
+	impl ToConstructQuery for EnumBlankNode {
 		fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
-			ConstructQuery::default()
-				.join_with_binding(
-					binding_variable.clone(),
-					NamedNode::new_unchecked("http://ex/field"),
+			ConstructQuery::new_with_binding(
+				binding_variable.clone(),
+				NamedNode::new_unchecked("http://ex/left"),
+				with_predicate(
+					NamedNode::new_unchecked("http://ex/value"),
 					String::to_query_with_binding,
-				)
-				.join(Struct::to_query_with_binding(binding_variable.clone()))
+				),
+			)
 		}
 	}
 
@@ -512,70 +494,115 @@ mod tests {
 		assert_eq!(expected, &actual);
 	}
 
-	#[test]
-	fn test_simple_enum() {
-		let input = SimpleEnum::Left("left".to_owned());
-		test_sparql(&input, None);
+	fn create_struct() -> Struct {
+		Struct {
+			field_0: "zero".to_owned(),
+			field_1: "one".to_owned(),
+		}
 	}
+
+	fn create_struct_id() -> StructId {
+		let id = IriBuf::new("http://example.org/myBar".to_string()).unwrap();
+		StructId {
+			id,
+			value: "value".to_owned(),
+		}
+	}
+
+	fn create_struct_type() -> StuctType {
+		StuctType {
+			field: "type_field".to_owned(),
+		}
+	}
+
+	fn create_struct_flatten() -> StructFlatten {
+		StructFlatten {
+			child: create_struct(),
+		}
+	}
+
+	fn create_struct_vec() -> StructVec {
+		StructVec {
+			more: vec![
+				create_struct(),
+				Struct {
+					field_0: "item2-zero".to_owned(),
+					field_1: "item2-one".to_owned(),
+				},
+			],
+		}
+	}
+
+	fn create_enum() -> Enum {
+		Enum::Right(create_struct())
+	}
+
+	fn create_enum_type() -> EnumType {
+		EnumType::Left("left".to_owned())
+	}
+
+	fn create_enum_blank_node() -> EnumBlankNode {
+		EnumBlankNode::Left("value".to_owned())
+	}
+
+	fn create_crazy_struct() -> CrazyStruct {
+		let id = IriBuf::new("http://example.org/crazy".to_string()).unwrap();
+		CrazyStruct {
+			id,
+			id_field: create_struct_id(),
+			type_field: create_struct_type(),
+			flatten_field: create_struct_flatten(),
+		}
+	}
+
+	fn create_crazy() -> Crazy {
+		Crazy::Id(create_struct_id())
+	}
+
+	#[test]
+	fn test_struct() {
+		test_sparql(&create_struct(), None);
+	}
+
+	#[test]
+	fn test_struct_id() {
+		let struct_id = create_struct_id();
+		test_sparql(&struct_id, Some(struct_id.id.clone()));
+	}
+
+	#[test]
+	fn test_struct_type() {
+		test_sparql(&create_struct_type(), None);
+	}
+
+	#[test]
+	fn test_struct_flatten() {
+		test_sparql(&create_struct_flatten(), None);
+	}
+
+	// NOTE Deserialize missing
+	#[test]
+	#[ignore]
+	fn test_struct_vec() {}
+
+	// NOTE Deserialize missing
+	#[test]
+	#[ignore]
+	fn test_struct_graph() {}
 
 	#[test]
 	fn test_enum() {
-		let simple_struct = Struct {
-			field_0: "zero".to_owned(),
-			field_1: "one".to_owned(),
-		};
-		let enum_ = Enum::Right(simple_struct);
-		test_sparql(&enum_, None);
+		test_sparql(&create_enum(), None);
+	}
+	// NOTE Type attribute for enum missing
+	#[test]
+	#[ignore]
+	fn test_enum_type() {
+		test_sparql(&create_enum_type(), None);
 	}
 
 	#[test]
-	fn test_simple_struct() {
-		let input = Struct {
-			field_0: "zero".to_owned(),
-			field_1: "one".to_owned(),
-		};
-		test_sparql(&input, None);
-	}
-
-	#[test]
-	fn test_flattend_struct() {
-		let child = Struct {
-			field_0: "flattened zero".to_owned(),
-			field_1: "flattened one".to_owned(),
-		};
-		let input = FlattendStruct {
-			child,
-			field: "parent".to_owned(),
-		};
-		test_sparql(&input, None);
-	}
-
-	#[test]
-	fn test_simple_property_compound_enum() {
-		let input = SimplePropertyCompoundEnum::Left("value".to_owned());
-		test_sparql(&input, None);
-	}
-
-	#[test]
-	fn test_id() {
-		let id = IriBuf::new("http://example.org/myBar".to_string()).unwrap();
-		let input = Id {
-			id: id.clone(),
-			value: "value".to_owned(),
-		};
-		test_sparql(&input, Some(id));
-	}
-
-	#[test]
-	fn test_type() {
-		let input = Type::default();
-		test_sparql(&input, None);
-	}
-
-	#[test]
-	fn test_simple_enum_type() {
-		// TODO linked-data-rs does not add the type to enums
-		let input = SimpleEnumType::Left("value".to_owned());
-		test_sparql(&input, None);
+	fn test_enum_blank_node() {
+		test_sparql(&create_enum_blank_node(), None);
 	}
 }

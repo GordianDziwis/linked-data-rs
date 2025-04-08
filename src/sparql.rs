@@ -244,7 +244,7 @@ mod tests {
 	};
 	use crate::{LinkedData, LinkedDataDeserializeSubject};
 	use iref::IriBuf;
-	use linked_data_derive::{Deserialize, Serialize};
+	use linked_data_derive::{Deserialize, Serialize, SparqlSerialize};
 	use oxigraph::sparql::QueryResults;
 	use oxigraph::store::Store;
 	use oxttl::NQuadsParser;
@@ -254,7 +254,7 @@ mod tests {
 	use rdf_types::Generator;
 	use spargebra::term::{NamedNode, Variable};
 
-	#[derive(Serialize, Deserialize, Debug, PartialEq)]
+	#[derive(SparqlSerialize, Serialize, Deserialize, Debug, PartialEq)]
 	#[ld(prefix("ex" = "http://ex/"))]
 	struct Struct {
 		#[ld("ex:field_0")]
@@ -264,7 +264,24 @@ mod tests {
 		field_1: String,
 	}
 
-	#[derive(Serialize, Deserialize, Debug, PartialEq)]
+	/// This will be generated
+	// impl ToConstructQuery for Struct {
+	// 	fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
+	// 		ConstructQuery::default()
+	// 			.join_with_binding(
+	// 				binding_variable.clone(),
+	// 				NamedNode::new_unchecked("http://ex/field_0"),
+	// 				String::to_query_with_binding,
+	// 			)
+	// 			.join_with_binding(
+	// 				binding_variable.clone(),
+	// 				NamedNode::new_unchecked("http://ex/field_1"),
+	// 				String::to_query_with_binding,
+	// 			)
+	// 	}
+	// }
+
+	#[derive(SparqlSerialize, Serialize, Deserialize, Debug, PartialEq)]
 	#[ld(prefix("ex" = "http://ex/"))]
 	struct StructId {
 		#[ld(id)]
@@ -274,7 +291,24 @@ mod tests {
 		value: String,
 	}
 
-	#[derive(Serialize, Deserialize, Debug, Default, PartialEq)]
+	/// This will be generated
+	// impl ToConstructQuery for StructId {
+	// 	fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
+	// 		ConstructQuery::default()
+	// 			.join_with_binding(
+	// 				binding_variable.clone(),
+	// 				NamedNode::new_unchecked("http://ex/field"),
+	// 				String::to_query_with_binding,
+	// 			)
+	// 			// NOTE Use this later
+	// 			.filter_variable(
+	// 				binding_variable.clone(),
+	// 				NamedNode::new_unchecked("http://example.org/myBar"),
+	// 			)
+	// 	}
+	// }
+
+	#[derive(SparqlSerialize, Serialize, Deserialize, Debug, Default, PartialEq)]
 	#[ld(type = "http://ex/Type")]
 	#[ld(prefix("ex" = "http://ex/"))]
 	struct StuctType {
@@ -282,12 +316,36 @@ mod tests {
 		field: String,
 	}
 
-	#[derive(Serialize, Deserialize, Debug, PartialEq)]
+	/// This will be generated
+	// impl ToConstructQuery for StuctType {
+	// 	fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
+	// 		ConstructQuery::default()
+	// 			.join_with_binding(
+	// 				binding_variable.clone(),
+	// 				NamedNode::new_unchecked("http://ex/field"),
+	// 				String::to_query_with_binding,
+	// 			)
+	// 			.join_with(
+	// 				binding_variable.clone(),
+	// 				NamedNode::new_unchecked("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
+	// 				NamedNode::new_unchecked("http://ex/Type"),
+	// 			)
+	// 	}
+	// }
+
+	#[derive(SparqlSerialize, Serialize, Deserialize, Debug, PartialEq)]
 	#[ld(prefix("ex" = "http://ex/"))]
 	struct StructFlatten {
 		#[ld(flatten)]
 		child: Struct,
 	}
+
+	/// This will be generated
+	// impl ToConstructQuery for StructFlatten {
+	// 	fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
+	// 		ConstructQuery::default().join(Struct::to_query_with_binding(binding_variable.clone()))
+	// 	}
+	// }
 
 	#[derive(Serialize, Deserialize, Debug, PartialEq)]
 	#[ld(prefix("ex" = "http://ex/"))]
@@ -301,14 +359,33 @@ mod tests {
 	enum Enum {
 		#[ld("ex:left")]
 		Left(String),
+
 		#[ld("ex:right")]
 		Right(Struct),
+	}
+
+	/// This will be generated
+	impl ToConstructQuery for Enum {
+		fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
+			ConstructQuery::default()
+				.union_with_binding(
+					binding_variable.clone(),
+					NamedNode::new_unchecked("http://ex/left"),
+					String::to_query_with_binding,
+				)
+				.union_with_binding(
+					binding_variable.clone(),
+					NamedNode::new_unchecked("http://ex/right"),
+					Struct::to_query_with_binding,
+				)
+		}
 	}
 
 	#[derive(Serialize, Deserialize, Debug, PartialEq)]
 	#[ld(type = "http://ex/Type")]
 	#[ld(prefix("ex" = "http://ex/"))]
 	enum EnumType {
+		#[ld(type = "http://ex/Type")]
 		#[ld("ex:left")]
 		Left(String),
 	}
@@ -326,10 +403,13 @@ mod tests {
 	struct CrazyStruct {
 		#[ld(id)]
 		id: IriBuf,
+
 		#[ld("ex:struct_id")]
 		id_field: StructId,
+
 		#[ld("ex:struct_type")]
 		type_field: StuctType,
+
 		#[ld("ex:struct_flatten")]
 		flatten_field: StructFlatten,
 	}
@@ -339,79 +419,12 @@ mod tests {
 	enum Crazy {
 		#[ld("ex:enum_id")]
 		Id(#[ld("ex:id")] StructId),
+
 		#[ld("ex:enum_type")]
 		Type(#[ld("ex:type")] StuctType),
+
 		#[ld("ex:enum_flatten")]
 		Flatten(#[ld("ex:flatten")] StructFlatten),
-	}
-
-	/// This will be generated
-	impl ToConstructQuery for Struct {
-		fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
-			ConstructQuery::default()
-				.join_with_binding(
-					binding_variable.clone(),
-					NamedNode::new_unchecked("http://ex/field_0"),
-					String::to_query_with_binding,
-				)
-				.join_with_binding(
-					binding_variable.clone(),
-					NamedNode::new_unchecked("http://ex/field_1"),
-					String::to_query_with_binding,
-				)
-		}
-	}
-
-	impl ToConstructQuery for StructId {
-		fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
-			ConstructQuery::default()
-				.join_with_binding(
-					binding_variable.clone(),
-					NamedNode::new_unchecked("http://ex/field"),
-					String::to_query_with_binding,
-				)
-				.filter_variable(
-					binding_variable.clone(),
-					NamedNode::new_unchecked("http://example.org/myBar"),
-				)
-		}
-	}
-
-	impl ToConstructQuery for StuctType {
-		fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
-			ConstructQuery::default()
-				.join_with_binding(
-					binding_variable.clone(),
-					NamedNode::new_unchecked("http://ex/field"),
-					String::to_query_with_binding,
-				)
-				.join_with(
-					binding_variable.clone(),
-					NamedNode::new_unchecked("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
-					NamedNode::new_unchecked("http://ex/Type"),
-				)
-		}
-	}
-
-	impl ToConstructQuery for StructFlatten {
-		fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
-			ConstructQuery::default().join(Struct::to_query_with_binding(binding_variable.clone()))
-		}
-	}
-
-	impl ToConstructQuery for Enum {
-		fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
-			ConstructQuery::new_with_binding(
-				binding_variable.clone(),
-				NamedNode::new_unchecked("http://ex/left"),
-				String::to_query_with_binding,
-			)
-			.union_with_binding(
-				binding_variable.clone(),
-				NamedNode::new_unchecked("http://ex/right"),
-				Struct::to_query_with_binding,
-			)
-		}
 	}
 
 	impl ToConstructQuery for EnumType {

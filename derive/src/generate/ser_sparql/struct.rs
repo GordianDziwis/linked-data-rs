@@ -1,9 +1,12 @@
-use proc_macro2::{Ident, Span, TokenStream};
+use std::collections::HashMap;
+
+use proc_macro2::{Ident, TokenStream};
 use quote::quote;
+use syn::{Field, Fields};
 
-use crate::generate::{extend_generics, InterpretationBounds, TypeAttributes, RDF_TYPE};
+use crate::generate::{read_field_attributes, CompactIri, TypeAttributes};
 
-use super::{variant_compound_fields, Error};
+use super::Error;
 
 pub fn generate(
 	attrs: &TypeAttributes,
@@ -11,127 +14,83 @@ pub fn generate(
 	generics: syn::Generics,
 	s: syn::DataStruct,
 ) -> Result<TokenStream, Error> {
-	Ok(quote!("xx"))
+	let fields = handle_fields(s.fields, &attrs.prefixes)?;
+	let type_attribute = type_attribute(attrs)?;
+	Ok(quote! {
+		impl ToConstructQuery for #ident {
+			fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
+				ConstructQuery::default()
+				#fields
+				#type_attribute
+			}
+		}
+	})
 }
 
-// pub fn generate(
-// 	attrs: &TypeAttributes,
-// 	ident: Ident,
-// 	generics: syn::Generics,
-// 	s: syn::DataStruct,
-// ) -> Result<TokenStream, Error> {
-// 	let fields = variant_compound_fields(
-// 		attrs,
-// 		s.fields,
-// 		|f| quote!(self.#f),
-// 		|i| {
-// 			let index = syn::Index {
-// 				index: i,
-// 				span: Span::call_site(),
-// 			};
-//
-// 			quote!(self.#index)
-// 		},
-// 		|t| quote!(&#t),
-// 	)?;
-//
-// 	let mut bounds: Vec<syn::WherePredicate> = fields.visit.bounds;
-//
-// 	let visit_type = attrs
-// 		.type_
-// 		.as_ref()
-// 		.map(|ty| {
-// 			let iri = ty.expand(&attrs.prefixes)?.into_string();
-// 			let rdf_type = RDF_TYPE.as_str();
-//
-// 			Ok(quote! {
-// 				visitor.visit_predicate(
-// 					::linked_data::iref::Iri::new(#rdf_type).unwrap(),
-// 					::linked_data::iref::Iri::new(#iri).unwrap()
-// 				)?;
-// 			})
-// 		})
-// 		.transpose()?;
-//
-// 	let visit = fields.visit.body;
-// 	let vocabulary_bounds = fields.visit.vocabulary_bounds;
-//
-// 	let term = match fields.id_field {
-// 		Some((field_access, ty)) => {
-// 			bounds.push(
-// 				syn::parse2(quote! {
-// 					#ty: ::linked_data::LinkedDataResource<I_, V_>
-// 				})
-// 				.unwrap(),
-// 			);
-//
-// 			quote! {
-// 				#field_access.interpretation(vocabulary, interpretation)
-// 			}
-// 		}
-// 		None => quote! {
-// 			::linked_data::ResourceInterpretation::Uninterpreted(None)
-// 		},
-// 	};
-//
-// 	let ld_generics = extend_generics(
-// 		&generics,
-// 		vocabulary_bounds,
-// 		InterpretationBounds::default(),
-// 		bounds,
-// 	);
-// 	let (_, ty_generics, _) = generics.split_for_impl();
-// 	let (impl_generics, _, where_clause) = ld_generics.split_for_impl();
-//
-// 	Ok(quote! {
-// 		impl #impl_generics ::linked_data::LinkedDataResource<I_, V_> for #ident #ty_generics #where_clause {
-// 			fn interpretation(
-// 				&self,
-// 				vocabulary: &mut V_,
-// 				interpretation: &mut I_
-// 			) -> linked_data::ResourceInterpretation<I_, V_> {
-// 				#term
-// 			}
-// 		}
-//
-// 		impl #impl_generics ::linked_data::LinkedDataSubject<I_, V_> for #ident #ty_generics #where_clause {
-// 			fn accept_subject_visitor<S_>(&self, mut visitor: S_) -> Result<S_::Ok, S_::Error>
-// 			where
-// 				S_: ::linked_data::SubjectVisitor<I_, V_>
-// 			{
-// 				#visit_type
-// 				#visit
-// 			}
-// 		}
-//
-// 		impl #impl_generics ::linked_data::LinkedDataPredicateObjects<I_, V_> for #ident #ty_generics #where_clause {
-// 			fn accept_objects_visitor<S_>(&self, mut visitor: S_) -> Result<S_::Ok, S_::Error>
-// 			where
-// 				S_: ::linked_data::PredicateObjectsVisitor<I_, V_>
-// 			{
-// 				visitor.visit_object(self)?;
-// 				visitor.end()
-// 			}
-// 		}
-//
-// 		impl #impl_generics ::linked_data::LinkedDataGraph<I_, V_> for #ident #ty_generics #where_clause {
-// 			fn accept_graph_visitor<S_>(&self, mut visitor: S_) -> Result<S_::Ok, S_::Error>
-// 			where
-// 				S_: ::linked_data::GraphVisitor<I_, V_>
-// 			{
-// 				visitor.visit_subject(self)?;
-// 				visitor.end()
-// 			}
-// 		}
-//
-// 		impl #impl_generics ::linked_data::LinkedData<I_, V_> for #ident #ty_generics #where_clause {
-// 			fn accept_visitor<S_>(&self, mut visitor: S_) -> Result<S_::Ok, S_::Error>
-// 			where
-// 				S_: ::linked_data::Visitor<I_, V_>
-// 			{
-// 				visitor.visit_default_graph(self)?;
-// 				visitor.end()
-// 			}
-// 		}
-// 	})
-// }
+fn type_attribute(attributes: &TypeAttributes) -> Result<TokenStream, Error> {
+	if let Some(type_iri) = &attributes.type_ {
+		let expanded_type_iri = type_iri.expand(&attributes.prefixes)?.into_string();
+		Ok(quote! {
+			.join_with(
+				binding_variable.clone(),
+				// TODO const for type
+				NamedNode::new_unchecked("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
+				NamedNode::new_unchecked(#expanded_type_iri),
+			)
+		})
+	} else {
+		Ok(quote!())
+	}
+}
+
+fn handle_fields(fields: Fields, prefixes: &HashMap<String, String>) -> Result<TokenStream, Error> {
+	fields
+		.into_iter()
+		.map(|field| handle_field(field, prefixes))
+		.collect()
+}
+
+fn handle_field(field: Field, prefixes: &HashMap<String, String>) -> Result<TokenStream, Error> {
+	let attributes = read_field_attributes(field.attrs)?;
+
+	if attributes.ignore {
+		return Ok(quote!());
+	}
+
+	let token_stream = [
+		handle_iri(attributes.iri, prefixes)?,
+		handle_flatten(attributes.flatten, &field.ty)?,
+	]
+	.into_iter()
+	.fold(quote!(), |acc, tokens| quote! { #acc #tokens });
+
+	Ok(token_stream)
+}
+
+fn handle_flatten(flatten: bool, ty: &syn::Type) -> Result<TokenStream, Error> {
+	match flatten {
+		true => Ok(quote! {
+			.join(#ty::to_query_with_binding(binding_variable.clone()))
+		}),
+		false => Ok(TokenStream::new()),
+	}
+}
+
+fn handle_iri(
+	iri: Option<CompactIri>,
+	prefixes: &HashMap<String, String>,
+) -> Result<TokenStream, Error> {
+	match iri {
+		Some(iri) => {
+			let expanded_iri = iri.expand(prefixes)?.into_string();
+			Ok(quote! {
+				.join_with_binding(
+					binding_variable.clone(),
+					NamedNode::new_unchecked(#expanded_iri),
+					String::to_query_with_binding,
+				)
+			})
+		}
+		None => Ok(TokenStream::new()),
+	}
+}

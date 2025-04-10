@@ -354,7 +354,7 @@ mod tests {
 		more: Vec<Struct>,
 	}
 
-	#[derive(Serialize, Deserialize, Debug, PartialEq)]
+	#[derive(SparqlSerialize, Serialize, Deserialize, Debug, PartialEq)]
 	#[ld(prefix("ex" = "http://ex/"))]
 	enum Enum {
 		#[ld("ex:left")]
@@ -365,21 +365,21 @@ mod tests {
 	}
 
 	/// This will be generated
-	impl ToConstructQuery for Enum {
-		fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
-			ConstructQuery::default()
-				.union_with_binding(
-					binding_variable.clone(),
-					NamedNode::new_unchecked("http://ex/left"),
-					String::to_query_with_binding,
-				)
-				.union_with_binding(
-					binding_variable.clone(),
-					NamedNode::new_unchecked("http://ex/right"),
-					Struct::to_query_with_binding,
-				)
-		}
-	}
+	// impl ToConstructQuery for Enum {
+	// 	fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
+	// 		ConstructQuery::default()
+	// 			.union_with_binding(
+	// 				binding_variable.clone(),
+	// 				NamedNode::new_unchecked("http://ex/left"),
+	// 				String::to_query_with_binding,
+	// 			)
+	// 			.union_with_binding(
+	// 				binding_variable.clone(),
+	// 				NamedNode::new_unchecked("http://ex/right"),
+	// 				Struct::to_query_with_binding,
+	// 			)
+	// 	}
+	// }
 
 	#[derive(Serialize, Deserialize, Debug, PartialEq)]
 	#[ld(type = "http://ex/Type")]
@@ -390,14 +390,28 @@ mod tests {
 		Left(String),
 	}
 
-	#[derive(Serialize, Deserialize, Debug, PartialEq)]
+	#[derive(SparqlSerialize, Serialize, Deserialize, Debug, PartialEq)]
 	#[ld(prefix("ex" = "http://ex/"))]
 	enum EnumBlankNode {
 		#[ld("ex:left")]
 		Left(#[ld("ex:value")] String),
 	}
 
-	#[derive(Serialize, Deserialize, Debug, PartialEq)]
+	// impl ToConstructQuery for EnumBlankNode {
+	// 	fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
+	// 		ConstructQuery::default().union_with_binding(
+	// 			binding_variable.clone(),
+	// 			NamedNode::new_unchecked("http://ex/left"),
+	// 			with_predicate(
+	// 				NamedNode::new_unchecked("http://ex/value"),
+	// 				String::to_query_with_binding,
+	// 			),
+	// 		)
+	// 	}
+	// }
+
+    // NOTE Nested id do not wirk
+	#[derive(SparqlSerialize, Serialize, Deserialize, Debug, PartialEq)]
 	#[ld(type = "http://ex/Type")]
 	#[ld(prefix("ex" = "http://ex/"))]
 	struct CrazyStruct {
@@ -407,16 +421,19 @@ mod tests {
 		#[ld("ex:struct_id")]
 		id_field: StructId,
 
-		#[ld("ex:struct_type")]
-		type_field: StuctType,
-
-		#[ld("ex:struct_flatten")]
-		flatten_field: StructFlatten,
+		// #[ld("ex:struct_type")]
+		// type_field: StuctType,
+		//
+		// #[ld("ex:struct_flatten")]
+		// flatten_field: StructFlatten,
+		//
+		// #[ld("ex:enum_crazy")]
+		// crazy_field: CrazyEnum,
 	}
 
-	#[derive(Serialize, Deserialize, Debug, PartialEq)]
+	#[derive(SparqlSerialize, Serialize, Deserialize, Debug, PartialEq)]
 	#[ld(prefix("ex" = "http://ex/"))]
-	enum Crazy {
+	enum CrazyEnum {
 		#[ld("ex:enum_id")]
 		Id(#[ld("ex:id")] StructId),
 
@@ -438,19 +455,6 @@ mod tests {
 				binding_variable.clone(),
 				NamedNode::new_unchecked("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
 				NamedNode::new_unchecked("http://ex/Type"),
-			)
-		}
-	}
-
-	impl ToConstructQuery for EnumBlankNode {
-		fn to_query_with_binding(binding_variable: Variable) -> ConstructQuery {
-			ConstructQuery::new_with_binding(
-				binding_variable.clone(),
-				NamedNode::new_unchecked("http://ex/left"),
-				with_predicate(
-					NamedNode::new_unchecked("http://ex/value"),
-					String::to_query_with_binding,
-				),
 			)
 		}
 	}
@@ -563,13 +567,14 @@ mod tests {
 		CrazyStruct {
 			id,
 			id_field: create_struct_id(),
-			type_field: create_struct_type(),
-			flatten_field: create_struct_flatten(),
+			// type_field: create_struct_type(),
+			// flatten_field: create_struct_flatten(),
+			// crazy_field: create_crazy_enum(),
 		}
 	}
 
-	fn create_crazy() -> Crazy {
-		Crazy::Id(create_struct_id())
+	fn create_crazy_enum() -> CrazyEnum {
+		CrazyEnum::Id(create_struct_id())
 	}
 
 	#[test]
@@ -617,5 +622,10 @@ mod tests {
 	#[test]
 	fn test_enum_blank_node() {
 		test_sparql(&create_enum_blank_node(), None);
+	}
+
+	#[test]
+	fn test_crazy_struct() {
+		test_sparql(&create_crazy_struct(), None);
 	}
 }

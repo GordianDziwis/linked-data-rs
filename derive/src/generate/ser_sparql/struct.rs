@@ -58,7 +58,7 @@ fn handle_field(field: Field, prefixes: &HashMap<String, String>) -> Result<Toke
 	}
 
 	let token_stream = [
-		handle_iri(attributes.iri, prefixes)?,
+		handle_iri(attributes.iri, &field.ty, prefixes)?,
 		handle_flatten(attributes.flatten, &field.ty)?,
 	]
 	.into_iter()
@@ -78,6 +78,7 @@ fn handle_flatten(flatten: bool, ty: &syn::Type) -> Result<TokenStream, Error> {
 
 fn handle_iri(
 	iri: Option<CompactIri>,
+	ty: &syn::Type,
 	prefixes: &HashMap<String, String>,
 ) -> Result<TokenStream, Error> {
 	match iri {
@@ -87,7 +88,7 @@ fn handle_iri(
 				.join_with_binding(
 					binding_variable.clone(),
 					NamedNode::new_unchecked(#expanded_iri),
-					String::to_query_with_binding,
+					#ty::to_query_with_binding,
 				)
 			})
 		}
